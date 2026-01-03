@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes.js';
 import foodRoutes from './routes/foodRoutes.js';
 import diaryRoutes from './routes/diaryRoutes.js';
 import weightRoutes from './routes/weightRoutes.js';
+import openFoodFactsRoutes from './routes/openFoodFactsRoutes.js';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/foods', foodRoutes);
 app.use('/api/diary', diaryRoutes);
 app.use('/api/weight', weightRoutes);
+app.use('/api/products', openFoodFactsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
