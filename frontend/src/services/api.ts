@@ -82,4 +82,53 @@ export const weightAPI = {
     api.delete(`/weight/${id}`),
 };
 
+// Open Food Facts API
+export interface ProductNutrition {
+  calories: number;
+  saturatedFat: number;
+  sugars: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  salt: number;
+}
+
+export interface Product {
+  barcode: string;
+  name: string;
+  synValue: number;
+  isFreeFood: boolean;
+  isSpeedFood: boolean;
+  nutrition: ProductNutrition;
+  image?: string;
+  servingSize: string;
+  categories: string[];
+}
+
+export interface ProductSearchResult {
+  products: Product[];
+  count: number;
+  page: number;
+  pageSize: number;
+}
+
+export const productsAPI = {
+  searchByBarcode: (barcode: string) =>
+    api.get<Product>(`/products/barcode/${barcode}`),
+
+  searchByName: (query: string, page?: number) =>
+    api.get<ProductSearchResult>('/products/search', { params: { q: query, page } }),
+
+  saveProduct: (data: {
+    barcode: string;
+    name: string;
+    synValue: number;
+    isFree: boolean;
+    isSpeed: boolean;
+    servingSize: string;
+  }) =>
+    api.post<Food>('/products/save', data),
+};
+
 export default api;
