@@ -34,17 +34,16 @@ A web-based food tracking application inspired by Slimming World principles, all
 ### Phase 1: Core Features (MVP)
 
 #### 1.1 User Management
-- User registration and login
+- User registration and login - not needed for now as only a single user.
 - User profile with:
   - Name
-  - Email
   - Starting weight
   - Current weight
   - Target weight
   - Daily syn allowance (customizable, default 15)
 
 #### 1.2 Food Database
-- Comprehensive database of common foods with:
+- Comprehensive database of common foods and also commeercial products with:
   - Food name
   - Syn value
   - Category (Free Food, Speed Food, Regular)
