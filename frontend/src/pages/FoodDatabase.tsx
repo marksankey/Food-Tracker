@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { foodAPI } from '../services/api';
 import { Food } from '../types';
+import ProductSearch from '../components/ProductSearch';
 import './FoodDatabase.css';
 
 const FoodDatabase = () => {
+  const [activeTab, setActiveTab] = useState<'myFoods' | 'searchProducts'>('myFoods');
   const [foods, setFoods] = useState<Food[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     loadFoods();
@@ -54,82 +55,105 @@ const FoodDatabase = () => {
     <div className="container">
       <h1>Food Database</h1>
 
-      <div className="card search-section">
-        <div className="search-bar">
-          <input
-            type="text"
-            placeholder="Search for foods..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-          />
-          <button onClick={handleSearch} className="btn btn-primary">
-            Search
-          </button>
-        </div>
-
-        <div className="filters">
-          <button
-            className={`filter-btn ${filterCategory === 'all' ? 'active' : ''}`}
-            onClick={() => setFilterCategory('all')}
-          >
-            All Foods
-          </button>
-          <button
-            className={`filter-btn ${filterCategory === 'free' ? 'active' : ''}`}
-            onClick={() => setFilterCategory('free')}
-          >
-            Free Foods
-          </button>
-          <button
-            className={`filter-btn ${filterCategory === 'speed' ? 'active' : ''}`}
-            onClick={() => setFilterCategory('speed')}
-          >
-            Speed Foods
-          </button>
-          <button
-            className={`filter-btn ${filterCategory === 'healthyExtra' ? 'active' : ''}`}
-            onClick={() => setFilterCategory('healthyExtra')}
-          >
-            Healthy Extras
-          </button>
-        </div>
+      <div className="tabs">
+        <button
+          className={`tab-btn ${activeTab === 'myFoods' ? 'active' : ''}`}
+          onClick={() => setActiveTab('myFoods')}
+        >
+          My Foods
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'searchProducts' ? 'active' : ''}`}
+          onClick={() => setActiveTab('searchProducts')}
+        >
+          Search UK Products
+        </button>
       </div>
 
-      <div className="card">
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : (
-          <div className="food-grid">
-            {filteredFoods.map((food) => (
-              <div key={food.id} className="food-item">
-                <div className="food-header">
-                  <h3>{food.name}</h3>
-                  <div className="food-badges">
-                    {food.isFreeFood && <span className="badge badge-free">Free</span>}
-                    {food.isSpeedFood && <span className="badge badge-speed">Speed</span>}
-                    {food.healthyExtraType && (
-                      <span className="badge badge-extra">HE {food.healthyExtraType}</span>
-                    )}
+      {activeTab === 'myFoods' ? (
+        <>
+          <div className="card search-section">
+            <div className="search-bar">
+              <input
+                type="text"
+                placeholder="Search for foods..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              />
+              <button onClick={handleSearch} className="btn btn-primary">
+                Search
+              </button>
+            </div>
+
+            <div className="filters">
+              <button
+                className={`filter-btn ${filterCategory === 'all' ? 'active' : ''}`}
+                onClick={() => setFilterCategory('all')}
+              >
+                All Foods
+              </button>
+              <button
+                className={`filter-btn ${filterCategory === 'free' ? 'active' : ''}`}
+                onClick={() => setFilterCategory('free')}
+              >
+                Free Foods
+              </button>
+              <button
+                className={`filter-btn ${filterCategory === 'speed' ? 'active' : ''}`}
+                onClick={() => setFilterCategory('speed')}
+              >
+                Speed Foods
+              </button>
+              <button
+                className={`filter-btn ${filterCategory === 'healthyExtra' ? 'active' : ''}`}
+                onClick={() => setFilterCategory('healthyExtra')}
+              >
+                Healthy Extras
+              </button>
+            </div>
+          </div>
+
+          <div className="card">
+            {isLoading ? (
+              <p>Loading...</p>
+            ) : (
+              <div className="food-grid">
+                {filteredFoods.map((food) => (
+                  <div key={food.id} className="food-item">
+                    <div className="food-header">
+                      <h3>{food.name}</h3>
+                      <div className="food-badges">
+                        {food.isFreeFood && <span className="badge badge-free">Free</span>}
+                        {food.isSpeedFood && <span className="badge badge-speed">Speed</span>}
+                        {food.healthyExtraType && (
+                          <span className="badge badge-extra">HE {food.healthyExtraType}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="food-info">
+                      <div className="food-syns">
+                        <span className="syn-value">{food.synValue}</span>
+                        <span className="syn-label">syns</span>
+                      </div>
+                      <div className="food-portion">
+                        per {food.portionSize} {food.portionUnit}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="food-info">
-                  <div className="food-syns">
-                    <span className="syn-value">{food.synValue}</span>
-                    <span className="syn-label">syns</span>
-                  </div>
-                  <div className="food-portion">
-                    per {food.portionSize} {food.portionUnit}
-                  </div>
-                </div>
+                ))}
+                {filteredFoods.length === 0 && (
+                  <p className="no-results">No foods found. Try a different search.</p>
+                )}
               </div>
-            ))}
-            {filteredFoods.length === 0 && (
-              <p className="no-results">No foods found. Try a different search.</p>
             )}
           </div>
-        )}
-      </div>
+        </>
+      ) : (
+        <div className="card">
+          <ProductSearch onProductSaved={loadFoods} />
+        </div>
+      )}
     </div>
   );
 };
