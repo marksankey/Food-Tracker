@@ -1,0 +1,151 @@
+.diary-header {
+  margin-bottom: 30px;
+}
+
+.diary-header h1 {
+  margin-bottom: 15px;
+}
+
+.date-navigator {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: center;
+}
+
+.current-date {
+  font-size: 1.2rem;
+  font-weight: 500;
+  min-width: 250px;
+  text-align: center;
+}
+
+.meal-section {
+  margin-bottom: 20px;
+}
+
+.meal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.meal-header h2 {
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.meal-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.meal-syns {
+  font-weight: 500;
+  color: #007bff;
+}
+
+.meal-entries {
+  min-height: 50px;
+}
+
+.entry-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.entry-row:last-child {
+  border-bottom: none;
+}
+
+.entry-details {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.entry-name {
+  font-weight: 500;
+}
+
+.entry-quantity {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.entry-syns {
+  font-weight: 500;
+  color: #007bff;
+  min-width: 70px;
+  text-align: right;
+}
+
+.btn-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 5px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.btn-delete:hover {
+  opacity: 1;
+}
+
+.no-entries-text {
+  color: #999;
+  font-style: italic;
+  padding: 20px;
+  text-align: center;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  padding: 30px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content h2 {
+  margin-bottom: 20px;
+  text-transform: capitalize;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}

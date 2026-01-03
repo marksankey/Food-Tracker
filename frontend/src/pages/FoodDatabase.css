@@ -1,0 +1,133 @@
+.search-section {
+  margin-bottom: 20px;
+}
+
+.search-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.search-bar input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  border-color: #007bff;
+}
+
+.filter-btn.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.food-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 15px;
+}
+
+.food-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+  transition: box-shadow 0.2s;
+}
+
+.food-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.food-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.food-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.food-badges {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-free {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.badge-speed {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.badge-extra {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.food-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.food-syns {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.syn-value {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #007bff;
+}
+
+.syn-label {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.food-portion {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
