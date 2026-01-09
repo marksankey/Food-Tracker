@@ -10,7 +10,6 @@ const ProductSearch = ({ onProductSaved }: ProductSearchProps) => {
   const [searchType, setSearchType] = useState<'name' | 'barcode'>('name');
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
