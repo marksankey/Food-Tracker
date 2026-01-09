@@ -65,15 +65,26 @@ export class UserModel {
     return stmt.get(userId) as UserProfile | undefined;
   }
 
-  static updateProfile(userId: string, data: Partial<UserProfile>): UserProfile {
+  static updateProfile(userId: string, data: any): UserProfile {
+    // Map camelCase to snake_case
+    const fieldMap: Record<string, string> = {
+      startingWeight: 'starting_weight',
+      currentWeight: 'current_weight',
+      targetWeight: 'target_weight',
+      height: 'height',
+      dailySynAllowance: 'daily_syn_allowance',
+      healthyExtraAAllowance: 'healthy_extra_a_allowance',
+      healthyExtraBAllowance: 'healthy_extra_b_allowance'
+    };
+
     const fields = Object.keys(data)
-      .filter(key => key !== 'id' && key !== 'user_id')
-      .map(key => `${key} = ?`)
+      .filter(key => fieldMap[key])
+      .map(key => `${fieldMap[key]} = ?`)
       .join(', ');
 
     const values = Object.keys(data)
-      .filter(key => key !== 'id' && key !== 'user_id')
-      .map(key => data[key as keyof UserProfile]);
+      .filter(key => fieldMap[key])
+      .map(key => data[key]);
 
     const stmt = db.prepare(`
       UPDATE user_profiles SET ${fields} WHERE user_id = ?
