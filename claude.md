@@ -1,0 +1,335 @@
+# Food Tracker - Claude Context
+
+## Project Overview
+
+This is a comprehensive food tracking application based on Slimming World principles. Users can track daily syn intake, log meals, monitor weight progress, and manage their diet effectively.
+
+### Key Principles
+- **Syn Tracking**: Default 15 syns/day (customizable)
+- **Free Foods**: Foods with 0 syns
+- **Speed Foods**: Fruits and vegetables (aim for 1/3 of each meal)
+- **Healthy Extras**: Track A (dairy) and B (fiber) allowances
+
+## Technical Stack
+
+### Frontend (`/frontend`)
+- **Framework**: React 18 with TypeScript
+- **Build Tool**: Vite
+- **Routing**: React Router v6
+- **HTTP Client**: Axios
+- **Styling**: CSS Modules
+- **Charts**: Chart.js for weight visualization
+- **Port**: 3000 (development)
+
+### Backend (`/backend`)
+- **Runtime**: Node.js with TypeScript
+- **Framework**: Express.js
+- **Database**: SQLite (better-sqlite3)
+- **Authentication**: JWT tokens (7-day expiry)
+- **Password Security**: bcrypt
+- **Port**: 5000 (development)
+
+## Project Structure
+
+```
+Food-Tracker/
+├── frontend/              # React application
+│   ├── src/
+│   │   ├── components/    # Reusable UI components
+│   │   ├── pages/         # Page components (Dashboard, FoodDiary, etc.)
+│   │   ├── services/      # API client (authService, foodService, etc.)
+│   │   ├── store/         # Context API state management
+│   │   ├── types/         # TypeScript interfaces
+│   │   └── utils/         # Helper functions
+│   ├── .env              # Frontend environment variables
+│   └── package.json
+│
+├── backend/              # Express API
+│   ├── src/
+│   │   ├── controllers/  # Route handlers
+│   │   ├── models/       # Database models
+│   │   ├── routes/       # API route definitions
+│   │   ├── middleware/   # Auth middleware
+│   │   ├── config/       # Database configuration
+│   │   └── utils/        # Seed data and utilities
+│   ├── database/         # SQLite database file
+│   ├── .env             # Backend environment variables
+│   └── package.json
+│
+├── README.md            # User documentation
+├── SPECIFICATION.md     # Detailed requirements
+└── claude.md           # This file
+```
+
+## Database Schema
+
+### Core Tables
+1. **users**: User accounts (id, username, email, password_hash)
+2. **user_profiles**: Health data (syn_allowance, starting_weight, target_weight, height)
+3. **foods**: Food database (name, category, syns, portion_size, is_free_food, is_speed_food, healthy_extra_type)
+4. **food_diary**: Meal entries (user_id, food_id, meal_type, date, quantity)
+5. **weight_logs**: Weight tracking (user_id, weight, date, notes)
+
+### Key Relationships
+- Users → UserProfiles (1:1)
+- Users → FoodDiary (1:many)
+- Users → WeightLogs (1:many)
+- Foods → FoodDiary (1:many)
+
+## API Endpoints
+
+### Authentication (`/api/auth`)
+- `POST /register` - Create account
+- `POST /login` - Authenticate (returns JWT)
+- `GET /profile` - Get user profile (requires auth)
+- `PUT /profile` - Update profile (requires auth)
+
+### Foods (`/api/foods`)
+- `GET /` - Get all foods
+- `GET /search?q=query` - Search foods by name
+- `GET /:id` - Get specific food
+- `POST /` - Create custom food (requires auth)
+
+### Food Diary (`/api/diary`)
+- `GET /?date=YYYY-MM-DD` - Get entries for date
+- `GET /summary?date=YYYY-MM-DD` - Get daily totals
+- `POST /` - Add entry (requires auth)
+- `PUT /:id` - Update entry (requires auth)
+- `DELETE /:id` - Delete entry (requires auth)
+
+### Weight Logs (`/api/weight`)
+- `GET /` - Get all weight logs (requires auth)
+- `POST /` - Add weight entry (requires auth)
+- `PUT /:id` - Update entry (requires auth)
+- `DELETE /:id` - Delete entry (requires auth)
+
+## Development Workflow
+
+### Initial Setup
+```bash
+# Backend setup
+cd backend
+npm install
+cp .env.example .env
+npm run seed          # Initialize DB with 60+ foods
+
+# Frontend setup
+cd frontend
+npm install
+cp .env.example .env
+```
+
+### Running Development Servers
+```bash
+# Terminal 1 - Backend
+cd backend
+npm run dev           # Runs on http://localhost:5000
+
+# Terminal 2 - Frontend
+cd frontend
+npm run dev           # Runs on http://localhost:3000
+```
+
+### Common Commands
+```bash
+# Backend
+npm run dev           # Development with hot reload
+npm run build         # Compile TypeScript
+npm start            # Production server
+npm run seed         # Reset and seed database
+
+# Frontend
+npm run dev          # Development server
+npm run build        # Production build
+npm run preview      # Test production build
+```
+
+## Key Features & Components
+
+### Authentication Flow
+1. User registers via `/auth/register`
+2. Password hashed with bcrypt
+3. Login returns JWT token
+4. Token stored in localStorage
+5. AuthContext manages auth state
+6. Protected routes require valid token
+
+### Food Database
+- Pre-loaded with 60+ common foods
+- Categories: Free Foods, Speed Foods, Protein, Carbs, Dairy, Snacks
+- Searchable by name
+- Users can add custom foods
+- Includes syn values, portion sizes, and special flags
+
+### Food Diary
+- Organized by meal type (breakfast, lunch, dinner, snacks)
+- Date-based filtering
+- Real-time syn calculation
+- Quick add from food database
+- Edit/delete existing entries
+
+### Dashboard
+- Daily syn counter with visual progress
+- Today's meals overview
+- Quick navigation
+- Healthy extras tracking
+
+### Weight Tracker
+- Log weight entries with dates
+- Line chart visualization
+- Progress calculation
+- BMI calculation (if height provided)
+
+## Important Notes
+
+### Environment Variables
+**Backend (.env)**
+```
+PORT=5000
+JWT_SECRET=your-secret-key-change-in-production
+NODE_ENV=development
+DATABASE_PATH=./database/food-tracker.db
+```
+
+**Frontend (.env)**
+```
+VITE_API_URL=http://localhost:5000/api
+```
+
+### Security Considerations
+- All API routes except /register and /login require JWT authentication
+- Passwords hashed with bcrypt (10 salt rounds)
+- JWT tokens expire after 7 days
+- SQL injection prevented with prepared statements
+- CORS enabled for frontend origin
+
+### Database Management
+- SQLite database created automatically on first run
+- Seed script (`npm run seed`) resets database
+- Database file: `backend/database/food-tracker.db`
+- Uses better-sqlite3 (synchronous, faster than node-sqlite3)
+
+### State Management
+- Frontend uses React Context API
+- AuthContext: User authentication state
+- No Redux or external state library needed
+- Local state for component-specific data
+
+## Common Development Tasks
+
+### Adding a New API Endpoint
+1. Create controller in `backend/src/controllers/`
+2. Add route in `backend/src/routes/`
+3. Add authentication middleware if needed
+4. Update API service in `frontend/src/services/`
+5. Use in components
+
+### Adding a New Food Category
+1. Update seed data in `backend/src/utils/seed.ts`
+2. Run `npm run seed` in backend
+3. Update category filter in frontend components
+
+### Modifying Database Schema
+1. Update model in `backend/src/models/`
+2. Update seed script
+3. Drop and recreate database (seed script does this)
+4. Update TypeScript interfaces in frontend
+
+### Adding a New Page
+1. Create component in `frontend/src/pages/`
+2. Add route in `frontend/src/App.tsx`
+3. Add navigation link if needed
+4. Create corresponding API service if needed
+
+## Testing Strategy
+
+### Manual Testing Checklist
+- [ ] User registration and login
+- [ ] Add food to diary
+- [ ] Search food database
+- [ ] Track daily syns
+- [ ] Log weight entry
+- [ ] View weight chart
+- [ ] Update profile settings
+- [ ] Create custom food
+
+### Test Users
+Create test users with different scenarios:
+- New user (no data)
+- User with meals logged
+- User with weight history
+- User at/over syn limit
+
+## Future Enhancements (See SPECIFICATION.md)
+- Meal planning
+- Recipe builder
+- Barcode scanner integration
+- Social features (friends, groups)
+- Mobile app (React Native)
+- Advanced analytics
+- Export/import data
+
+## Troubleshooting
+
+### Common Issues
+
+**Backend won't start**
+- Check if port 5000 is available
+- Verify .env file exists
+- Run `npm install` to ensure dependencies
+
+**Frontend can't connect to API**
+- Verify backend is running
+- Check VITE_API_URL in frontend/.env
+- Check CORS settings in backend
+
+**Database errors**
+- Delete database file and run `npm run seed`
+- Check DATABASE_PATH in backend/.env
+- Ensure write permissions on database directory
+
+**Authentication issues**
+- Check JWT_SECRET is set
+- Verify token is stored in localStorage
+- Check token expiry (7 days)
+
+## Code Style & Conventions
+
+### TypeScript
+- Use interfaces for data structures
+- Avoid `any` type when possible
+- Export types from `/types` directory
+- Use async/await for promises
+
+### React Components
+- Functional components with hooks
+- Use TypeScript for props
+- CSS Modules for styling
+- Separate business logic into custom hooks
+
+### API Responses
+```typescript
+// Success
+{ success: true, data: {...} }
+
+// Error
+{ success: false, message: "Error description" }
+```
+
+### Naming Conventions
+- Components: PascalCase (e.g., `FoodDiary.tsx`)
+- Files: camelCase or kebab-case
+- API routes: kebab-case (e.g., `/food-diary`)
+- Database: snake_case (e.g., `user_profiles`)
+
+## Git Branch Strategy
+
+- `main` - Production-ready code
+- `claude/*` - Claude development branches
+- Feature branches should be descriptive
+
+## Contact & Resources
+
+- Repository: https://github.com/marksankey/Food-Tracker
+- Documentation: See README.md and SPECIFICATION.md
+- Slimming World: Official diet program (this is educational implementation)
