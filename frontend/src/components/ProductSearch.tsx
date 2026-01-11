@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { productsAPI, Product } from '../services/api';
+import BarcodeScanner from './BarcodeScanner';
 import './ProductSearch.css';
 
 interface ProductSearchProps {
@@ -13,6 +14,7 @@ const ProductSearch = ({ onProductSaved }: ProductSearchProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -57,6 +59,30 @@ const ProductSearch = ({ onProductSaved }: ProductSearchProps) => {
     }
   };
 
+  const handleBarcodeScanned = (barcode: string) => {
+    setSearchQuery(barcode);
+    setShowScanner(false);
+    // Automatically search for the scanned barcode
+    setTimeout(() => {
+      handleSearchBarcode(barcode);
+    }, 100);
+  };
+
+  const handleSearchBarcode = async (barcode: string) => {
+    setIsLoading(true);
+    setError('');
+    setProducts([]);
+
+    try {
+      const response = await productsAPI.searchByBarcode(barcode);
+      setProducts([response.data]);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Product not found');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="product-search">
       <div className="search-type-toggle">
@@ -82,6 +108,15 @@ const ProductSearch = ({ onProductSaved }: ProductSearchProps) => {
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
         />
+        {searchType === 'barcode' && (
+          <button
+            onClick={() => setShowScanner(true)}
+            className="btn btn-secondary btn-camera"
+            title="Scan barcode with camera"
+          >
+            📷
+          </button>
+        )}
         <button onClick={handleSearch} className="btn btn-primary" disabled={isLoading}>
           {isLoading ? 'Searching...' : 'Search'}
         </button>
@@ -146,6 +181,13 @@ const ProductSearch = ({ onProductSaved }: ProductSearchProps) => {
           Syn values are automatically calculated from nutritional information.
         </p>
       </div>
+
+      {showScanner && (
+        <BarcodeScanner
+          onScan={handleBarcodeScanned}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
     </div>
   );
 };

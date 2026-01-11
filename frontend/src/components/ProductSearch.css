@@ -44,6 +44,32 @@
   font-size: 1rem;
 }
 
+.btn-camera {
+  font-size: 1.5rem;
+  padding: 8px 16px;
+  min-width: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .product-search-bar {
+    gap: 8px;
+  }
+
+  .btn-camera {
+    font-size: 1.3rem;
+    padding: 10px 14px;
+  }
+}
+
 .error-message {
   background-color: #f8d7da;
   color: #721c24;
