@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
-import { UserProfile } from '../types';
 import './Profile.css';
 
 const Profile = () => {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     startingWeight: 0,
@@ -26,7 +24,6 @@ const Profile = () => {
     try {
       const response = await authAPI.getProfile();
       const loadedProfile = response.data.profile;
-      setProfile(loadedProfile);
       setFormData({
         startingWeight: loadedProfile.startingWeight,
         currentWeight: loadedProfile.currentWeight,
