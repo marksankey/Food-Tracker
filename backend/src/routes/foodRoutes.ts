@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { getFoods, searchFoods, getFood, createFood } from '../controllers/foodController.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { addDefaultUser } from '../middleware/noauth.js';
 
 const router = Router();
 
-router.get('/', authenticateToken, getFoods);
-router.get('/search', authenticateToken, searchFoods);
-router.get('/:id', authenticateToken, getFood);
-router.post('/', authenticateToken, createFood);
+router.get('/', addDefaultUser, getFoods);
+router.get('/search', addDefaultUser, searchFoods);
+router.get('/:id', addDefaultUser, getFood);
+router.post('/', addDefaultUser, createFood);
 
 export default router;

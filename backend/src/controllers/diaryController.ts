@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { DiaryModel } from '../models/Diary.js';
-import { AuthRequest } from '../middleware/auth.js';
+import { AuthRequest } from '../middleware/noauth.js';
 import { UserModel } from '../models/User.js';
 
 export const getDiaryEntries = async (req: AuthRequest, res: Response) => {

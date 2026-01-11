@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { AuthRequest } from '../middleware/auth.js';
+import { AuthRequest } from '../middleware/noauth.js';
 import { getProductByBarcode, searchProducts, getNutrition } from '../services/openFoodFacts.js';
 import { calculateSyns, isFreeFood, isSpeedFood } from '../utils/synCalculator.js';
 import { FoodModel } from '../models/Food.js';

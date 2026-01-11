@@ -5,13 +5,13 @@ import {
   updateWeightLog,
   deleteWeightLog
 } from '../controllers/weightController.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { addDefaultUser } from '../middleware/noauth.js';
 
 const router = Router();
 
-router.get('/', authenticateToken, getWeightLogs);
-router.post('/', authenticateToken, createWeightLog);
-router.put('/:id', authenticateToken, updateWeightLog);
-router.delete('/:id', authenticateToken, deleteWeightLog);
+router.get('/', addDefaultUser, getWeightLogs);
+router.post('/', addDefaultUser, createWeightLog);
+router.put('/:id', addDefaultUser, updateWeightLog);
+router.delete('/:id', addDefaultUser, deleteWeightLog);
 
 export default router;

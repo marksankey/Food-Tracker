@@ -1,26 +1,29 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../store/AuthContext';
-import { diaryAPI } from '../services/api';
-import { DailySummary } from '../types';
+import { diaryAPI, authAPI } from '../services/api';
+import { DailySummary, UserProfile } from '../types';
 import { format } from 'date-fns';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  const { profile } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const today = format(new Date(), 'yyyy-MM-dd');
 
   useEffect(() => {
-    loadDailySummary();
+    loadData();
   }, []);
 
-  const loadDailySummary = async () => {
+  const loadData = async () => {
     try {
-      const response = await diaryAPI.getDailySummary(today);
-      setSummary(response.data);
+      const [profileResponse, summaryResponse] = await Promise.all([
+        authAPI.getProfile(),
+        diaryAPI.getDailySummary(today)
+      ]);
+      setProfile(profileResponse.data.profile);
+      setSummary(summaryResponse.data);
     } catch (error) {
-      console.error('Failed to load daily summary:', error);
+      console.error('Failed to load data:', error);
     } finally {
       setIsLoading(false);
     }

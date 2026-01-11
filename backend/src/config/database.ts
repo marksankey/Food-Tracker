@@ -111,6 +111,23 @@ export const initializeDatabase = () => {
     console.log('Database is empty, seeding with initial foods...');
     seedDatabase();
   }
+
+  // Create default user for personal app (no authentication)
+  const defaultUserId = 'default-user';
+  const existingUser = db.prepare('SELECT * FROM users WHERE id = ?').get(defaultUserId);
+  if (!existingUser) {
+    console.log('Creating default user for personal app...');
+    db.prepare('INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)').run(
+      defaultUserId,
+      'default@local',
+      'not-needed',
+      'My Food Tracker'
+    );
+    db.prepare('INSERT INTO user_profiles (id, user_id, starting_weight, current_weight, target_weight, daily_syn_allowance, healthy_extra_a_allowance, healthy_extra_b_allowance) VALUES (?, ?, 0, 0, 0, 15, 1, 1)').run(
+      uuidv4(),
+      defaultUserId
+    );
+  }
 };
 
 // Import seedDatabase function inline to avoid circular dependencies

@@ -1,35 +1,46 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../store/AuthContext';
+import { authAPI } from '../services/api';
+import { UserProfile } from '../types';
 import './Profile.css';
 
 const Profile = () => {
-  const { user, profile, updateProfile } = useAuth();
-  const [isEditing, setIsEditing] = useState(!profile?.startingWeight);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    startingWeight: profile?.startingWeight || 0,
-    currentWeight: profile?.currentWeight || 0,
-    targetWeight: profile?.targetWeight || 0,
-    height: profile?.height || 0,
-    dailySynAllowance: profile?.dailySynAllowance || 15,
-    healthyExtraAAllowance: profile?.healthyExtraAAllowance || 1,
-    healthyExtraBAllowance: profile?.healthyExtraBAllowance || 1,
+    startingWeight: 0,
+    currentWeight: 0,
+    targetWeight: 0,
+    height: 0,
+    dailySynAllowance: 15,
+    healthyExtraAAllowance: 1,
+    healthyExtraBAllowance: 1,
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    if (profile) {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const response = await authAPI.getProfile();
+      const loadedProfile = response.data.profile;
+      setProfile(loadedProfile);
       setFormData({
-        startingWeight: profile.startingWeight,
-        currentWeight: profile.currentWeight,
-        targetWeight: profile.targetWeight,
-        height: profile.height || 0,
-        dailySynAllowance: profile.dailySynAllowance,
-        healthyExtraAAllowance: profile.healthyExtraAAllowance,
-        healthyExtraBAllowance: profile.healthyExtraBAllowance,
+        startingWeight: loadedProfile.startingWeight,
+        currentWeight: loadedProfile.currentWeight,
+        targetWeight: loadedProfile.targetWeight,
+        height: loadedProfile.height || 0,
+        dailySynAllowance: loadedProfile.dailySynAllowance,
+        healthyExtraAAllowance: loadedProfile.healthyExtraAAllowance,
+        healthyExtraBAllowance: loadedProfile.healthyExtraBAllowance,
       });
+      setIsEditing(!loadedProfile.startingWeight);
+    } catch (error) {
+      console.error('Failed to load profile:', error);
     }
-  }, [profile]);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +48,8 @@ const Profile = () => {
     setSuccess('');
 
     try {
-      await updateProfile(formData);
+      await authAPI.updateProfile(formData);
+      await loadProfile();
       setSuccess('Profile updated successfully!');
       setIsEditing(false);
     } catch (err: any) {
@@ -60,20 +72,6 @@ const Profile = () => {
   return (
     <div className="container">
       <h1>Profile</h1>
-
-      <div className="card profile-info">
-        <h2>Account Information</h2>
-        <div className="info-grid">
-          <div className="info-item">
-            <span className="info-label">Name:</span>
-            <span className="info-value">{user?.name}</span>
-          </div>
-          <div className="info-item">
-            <span className="info-label">Email:</span>
-            <span className="info-value">{user?.email}</span>
-          </div>
-        </div>
-      </div>
 
       <div className="card">
         <div className="card-header">
