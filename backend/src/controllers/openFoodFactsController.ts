@@ -22,18 +22,18 @@ export const searchByBarcode = async (req: AuthRequest, res: Response) => {
     }
 
     const nutrition = getNutrition(product);
-    const synValue = calculateSyns(nutrition);
+    const synsPer100g = calculateSyns(nutrition);
     const productName = product.product_name || 'Unknown Product';
 
     res.json({
       barcode: product.code,
       name: `${productName}${product.brands ? ` (${product.brands})` : ''}`,
-      synValue,
+      synValue: synsPer100g,
       isFreeFood: isFreeFood(nutrition, productName),
       isSpeedFood: isSpeedFood(productName, product.categories_tags),
       nutrition,
       image: product.image_url,
-      servingSize: product.serving_size || '100g',
+      servingSize: '100g', // Always show per 100g for consistency
       categories: product.categories_tags || []
     });
   } catch (error) {
@@ -58,18 +58,18 @@ export const searchByName = async (req: AuthRequest, res: Response) => {
 
     const productsWithSyns = results.products.map(product => {
       const nutrition = getNutrition(product);
-      const synValue = calculateSyns(nutrition);
+      const synsPer100g = calculateSyns(nutrition);
       const productName = product.product_name || 'Unknown Product';
 
       return {
         barcode: product.code,
         name: `${productName}${product.brands ? ` (${product.brands})` : ''}`,
-        synValue,
+        synValue: synsPer100g,
         isFreeFood: isFreeFood(nutrition, productName),
         isSpeedFood: isSpeedFood(productName, product.categories_tags),
         nutrition,
         image: product.image_url,
-        servingSize: product.serving_size || '100g',
+        servingSize: '100g', // Always show per 100g for consistency
         categories: product.categories_tags || []
       };
     });
