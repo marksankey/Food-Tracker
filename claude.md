@@ -25,8 +25,8 @@ This is a comprehensive food tracking application based on Slimming World princi
 - **Runtime**: Node.js with TypeScript
 - **Framework**: Express.js
 - **Database**: SQLite (better-sqlite3)
-- **Authentication**: JWT tokens (7-day expiry)
-- **Password Security**: bcrypt
+- **Authentication**: No authentication (personal app)
+- **Password Security**: bcrypt (for legacy auth routes)
 - **Port**: 5000 (development)
 
 ## Project Structure
@@ -49,7 +49,7 @@ Food-Tracker/
 │   │   ├── controllers/  # Route handlers
 │   │   ├── models/       # Database models
 │   │   ├── routes/       # API route definitions
-│   │   ├── middleware/   # Auth middleware
+│   │   ├── middleware/   # Auth middleware (noauth.js for personal use)
 │   │   ├── config/       # Database configuration
 │   │   └── utils/        # Seed data and utilities
 │   ├── database/         # SQLite database file
@@ -79,29 +79,30 @@ Food-Tracker/
 ## API Endpoints
 
 ### Authentication (`/api/auth`)
-- `POST /register` - Create account
-- `POST /login` - Authenticate (returns JWT)
-- `GET /profile` - Get user profile (requires auth)
-- `PUT /profile` - Update profile (requires auth)
+**Note**: Authentication is simplified for personal use. All routes are accessible without JWT tokens.
+- `POST /register` - Create account (legacy, returns stub token)
+- `POST /login` - Authenticate (legacy, returns stub token)
+- `GET /profile` - Get user profile
+- `PUT /profile` - Update profile
 
 ### Foods (`/api/foods`)
 - `GET /` - Get all foods
 - `GET /search?q=query` - Search foods by name
 - `GET /:id` - Get specific food
-- `POST /` - Create custom food (requires auth)
+- `POST /` - Create custom food
 
 ### Food Diary (`/api/diary`)
 - `GET /?date=YYYY-MM-DD` - Get entries for date
 - `GET /summary?date=YYYY-MM-DD` - Get daily totals
-- `POST /` - Add entry (requires auth)
-- `PUT /:id` - Update entry (requires auth)
-- `DELETE /:id` - Delete entry (requires auth)
+- `POST /` - Add entry
+- `PUT /:id` - Update entry
+- `DELETE /:id` - Delete entry
 
 ### Weight Logs (`/api/weight`)
-- `GET /` - Get all weight logs (requires auth)
-- `POST /` - Add weight entry (requires auth)
-- `PUT /:id` - Update entry (requires auth)
-- `DELETE /:id` - Delete entry (requires auth)
+- `GET /` - Get all weight logs
+- `POST /` - Add weight entry
+- `PUT /:id` - Update entry
+- `DELETE /:id` - Delete entry
 
 ## Development Workflow
 
@@ -147,12 +148,13 @@ npm run preview      # Test production build
 ## Key Features & Components
 
 ### Authentication Flow
-1. User registers via `/auth/register`
-2. Password hashed with bcrypt
-3. Login returns JWT token
-4. Token stored in localStorage
-5. AuthContext manages auth state
-6. Protected routes require valid token
+**SIMPLIFIED FOR PERSONAL USE** - Authentication has been removed to make this a personal app.
+1. App opens directly to dashboard (no login required)
+2. Uses stub authentication middleware (`noauth.js`)
+3. Legacy auth routes still exist but return stub tokens
+4. No JWT verification on protected routes
+5. AuthContext still manages state but doesn't enforce authentication
+6. Frontend skips login/register screens
 
 ### Food Database
 - Pre-loaded with 60+ common foods
@@ -182,6 +184,19 @@ npm run preview      # Test production build
 
 ## Important Notes
 
+### Recent Changes
+**2026-01-11**: Fixed TypeScript build error on Render deployment
+- Issue: `generateToken` was not imported in `authController.ts`
+- Solution: Added `generateToken` to imports from `noauth.js` middleware
+- Location: `backend/src/controllers/authController.ts:3`
+- This was causing TS2304 compilation errors preventing Render deployment
+
+**Authentication Removal**: App converted to personal use
+- Removed JWT authentication enforcement
+- Created `noauth.js` middleware with stub functions
+- App opens directly to dashboard
+- Legacy auth routes remain for backwards compatibility
+
 ### Environment Variables
 **Backend (.env)**
 ```
@@ -197,11 +212,12 @@ VITE_API_URL=http://localhost:5000/api
 ```
 
 ### Security Considerations
-- All API routes except /register and /login require JWT authentication
-- Passwords hashed with bcrypt (10 salt rounds)
-- JWT tokens expire after 7 days
+**Note**: This is a personal app with simplified authentication.
+- No JWT authentication required (uses stub middleware)
+- Passwords still hashed with bcrypt for legacy routes
 - SQL injection prevented with prepared statements
 - CORS enabled for frontend origin
+- **WARNING**: Do not use in production with multiple users without proper authentication
 
 ### Database Management
 - SQLite database created automatically on first run
@@ -289,9 +305,10 @@ Create test users with different scenarios:
 - Ensure write permissions on database directory
 
 **Authentication issues**
-- Check JWT_SECRET is set
-- Verify token is stored in localStorage
-- Check token expiry (7 days)
+- Authentication is simplified for personal use (no JWT required)
+- Check that `noauth.js` middleware is being used
+- Legacy auth routes should return stub tokens
+- If upgrading to multi-user, switch to `auth.js` middleware
 
 ## Code Style & Conventions
 
@@ -324,9 +341,15 @@ Create test users with different scenarios:
 
 ## Git Branch Strategy
 
-- `main` - Production-ready code
-- `claude/*` - Claude development branches
+- `main` - Production-ready code (not yet configured)
+- `claude/*` - Claude development branches (e.g., `claude/debug-render-deployment-7ZnIO`)
 - Feature branches should be descriptive
+- Always push to the branch specified in the task context
+- Branch names must start with 'claude/' and include session ID for push to succeed
+
+### Current Development Branch
+- Working branch: `claude/debug-render-deployment-7ZnIO`
+- Purpose: Debug and fix Render deployment issues
 
 ## Contact & Resources
 
