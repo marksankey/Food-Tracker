@@ -8,7 +8,6 @@ interface BarcodeScannerProps {
 }
 
 const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
-  const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState('');
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const isInitializedRef = useRef(false);
@@ -20,7 +19,6 @@ const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
 
     const startScanner = async () => {
       try {
-        setIsScanning(true);
         setError('');
 
         // Initialize scanner
@@ -67,19 +65,16 @@ const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
             onScan(decodedText);
             stopScanner();
           },
-          (errorMessage) => {
+          (_errorMessage) => {
             // Scanning errors (expected when no barcode in view)
             // We can ignore these
           }
         );
-
-        setIsScanning(true);
       } catch (err: any) {
         console.error('Scanner error:', err);
         setError(
           err.message || 'Failed to start camera. Please check permissions.'
         );
-        setIsScanning(false);
       }
     };
 
@@ -92,7 +87,6 @@ const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
           console.error('Error stopping scanner:', err);
         }
       }
-      setIsScanning(false);
     };
 
     startScanner();
