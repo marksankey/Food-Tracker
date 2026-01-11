@@ -59,6 +59,7 @@ export const getProductByBarcode = async (barcode: string): Promise<OpenFoodFact
 
 /**
  * Search for products by name
+ * Note: Using v1 API (/cgi/search.pl) because v2 doesn't support full text search
  */
 export const searchProducts = async (
   query: string,
@@ -67,15 +68,19 @@ export const searchProducts = async (
 ): Promise<OpenFoodFactsSearchResult> => {
   try {
     const response = await axios.get<OpenFoodFactsSearchResult>(
-      `${OPEN_FOOD_FACTS_API}/search`,
+      'https://world.openfoodfacts.org/cgi/search.pl',
       {
         params: {
           search_terms: query,
+          search_simple: 1,
+          action: 'process',
+          json: 1,
           page,
           page_size: pageSize,
-          json: 1,
-          countries: 'United Kingdom', // Prioritize UK products
-          sort_by: 'popularity'
+          tagtype_0: 'countries',
+          tag_contains_0: 'contains',
+          tag_0: 'united-kingdom', // Prioritize UK products
+          sort_by: 'unique_scans_n' // Sort by popularity (unique scans)
         }
       }
     );
