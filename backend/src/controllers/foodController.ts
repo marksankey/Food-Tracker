@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { FoodModel } from '../models/Food.js';
-import { AuthRequest } from '../middleware/auth.js';
+import { AuthRequest } from '../middleware/noauth.js';
 
 export const getFoods = async (req: AuthRequest, res: Response) => {
   try {

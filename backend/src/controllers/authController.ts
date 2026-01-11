@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { UserModel } from '../models/User.js';
-import { generateToken, AuthRequest } from '../middleware/auth.js';
+import { AuthRequest } from '../middleware/noauth.js';
 
 export const register = async (req: Request, res: Response) => {
   try {

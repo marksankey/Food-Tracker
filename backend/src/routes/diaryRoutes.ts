@@ -6,14 +6,14 @@ import {
   updateDiaryEntry,
   deleteDiaryEntry
 } from '../controllers/diaryController.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { addDefaultUser } from '../middleware/noauth.js';
 
 const router = Router();
 
-router.get('/', authenticateToken, getDiaryEntries);
-router.get('/summary', authenticateToken, getDailySummary);
-router.post('/', authenticateToken, createDiaryEntry);
-router.put('/:id', authenticateToken, updateDiaryEntry);
-router.delete('/:id', authenticateToken, deleteDiaryEntry);
+router.get('/', addDefaultUser, getDiaryEntries);
+router.get('/summary', addDefaultUser, getDailySummary);
+router.post('/', addDefaultUser, createDiaryEntry);
+router.put('/:id', addDefaultUser, updateDiaryEntry);
+router.delete('/:id', addDefaultUser, deleteDiaryEntry);
 
 export default router;

@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { searchByBarcode, searchByName, saveProduct } from '../controllers/openFoodFactsController.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { addDefaultUser } from '../middleware/noauth.js';
 
 const router = Router();
 
-router.get('/barcode/:barcode', authenticateToken, searchByBarcode);
-router.get('/search', authenticateToken, searchByName);
-router.post('/save', authenticateToken, saveProduct);
+router.get('/barcode/:barcode', addDefaultUser, searchByBarcode);
+router.get('/search', addDefaultUser, searchByName);
+router.post('/save', addDefaultUser, saveProduct);
 
 export default router;

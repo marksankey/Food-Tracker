@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { WeightModel } from '../models/Weight.js';
-import { AuthRequest } from '../middleware/auth.js';
+import { AuthRequest } from '../middleware/noauth.js';
 
 export const getWeightLogs = async (req: AuthRequest, res: Response) => {
   try {
