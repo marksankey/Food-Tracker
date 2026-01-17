@@ -27,7 +27,9 @@ export const searchByBarcode = async (req: AuthRequest, res: Response) => {
 
     // Scale syn value from per-100g to per-serving
     const servingSizeStr = product.serving_size || '100g';
-    const portionSize = parseFloat(servingSizeStr) || 100;
+    // Extract number from strings like "1 serving (14 g)" or "20 g"
+    const match = servingSizeStr.match(/\((\d+\.?\d*)\s*g\)|(\d+\.?\d*)\s*g/);
+    const portionSize = match ? parseFloat(match[1] || match[2]) : 100;
     const scaledSynValue = synValuePer100g * (portionSize / 100);
 
     // Debug logging
@@ -76,7 +78,9 @@ export const searchByName = async (req: AuthRequest, res: Response) => {
 
         // Scale syn value from per-100g to per-serving
         const servingSizeStr = product.serving_size || '100g';
-        const portionSize = parseFloat(servingSizeStr) || 100;
+        // Extract number from strings like "1 serving (14 g)" or "20 g"
+        const match = servingSizeStr.match(/\((\d+\.?\d*)\s*g\)|(\d+\.?\d*)\s*g/);
+        const portionSize = match ? parseFloat(match[1] || match[2]) : 100;
         const scaledSynValue = synValuePer100g * (portionSize / 100);
 
         return {
@@ -137,7 +141,9 @@ export const saveProduct = async (req: AuthRequest, res: Response) => {
     }
 
     // Parse serving size and scale syn value from per-100g to per-serving
-    const portionSize = parseFloat(servingSize) || 100;
+    // Extract number from strings like "1 serving (14 g)" or "20 g"
+    const match = servingSize?.match(/\((\d+\.?\d*)\s*g\)|(\d+\.?\d*)\s*g/);
+    const portionSize = match ? parseFloat(match[1] || match[2]) : (parseFloat(servingSize) || 100);
     const scaledSynValue = synValue ? (synValue * portionSize / 100) : 0;
 
     const food = FoodModel.create({
