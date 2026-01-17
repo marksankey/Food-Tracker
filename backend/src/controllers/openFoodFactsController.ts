@@ -32,18 +32,24 @@ export const searchByBarcode = async (req: AuthRequest, res: Response) => {
     const portionSize = match ? parseFloat(match[1] || match[2]) : 100;
     const scaledSynValue = synValuePer100g * (portionSize / 100);
 
+    // Check if this is a free food
+    const isProductFreeFood = isFreeFood(nutrition, productName);
+    const finalSynValue = isProductFreeFood ? 0 : Math.round(scaledSynValue * 2) / 2;
+
     // Debug logging
     console.log(`[Barcode Scan] ${productName}`);
     console.log(`  Nutrition:`, nutrition);
     console.log(`  Syn per 100g: ${synValuePer100g}`);
     console.log(`  Serving size: ${servingSizeStr} -> ${portionSize}g`);
     console.log(`  Scaled syn: ${scaledSynValue} -> ${Math.round(scaledSynValue * 2) / 2}`);
+    console.log(`  Is free food: ${isProductFreeFood}`);
+    console.log(`  Final syn value: ${finalSynValue}`);
 
     res.json({
       barcode: product.code,
       name: `${productName}${product.brands ? ` (${product.brands})` : ''}`,
-      synValue: Math.round(scaledSynValue * 2) / 2, // Round to 0.5 increments
-      isFreeFood: isFreeFood(nutrition, productName),
+      synValue: finalSynValue,
+      isFreeFood: isProductFreeFood,
       isSpeedFood: isSpeedFood(productName, product.categories_tags),
       nutrition,
       image: product.image_url,
@@ -83,11 +89,15 @@ export const searchByName = async (req: AuthRequest, res: Response) => {
         const portionSize = match ? parseFloat(match[1] || match[2]) : 100;
         const scaledSynValue = synValuePer100g * (portionSize / 100);
 
+        // Check if this is a free food - free foods always have 0 syns
+        const isProductFreeFood = isFreeFood(nutrition, productName);
+        const finalSynValue = isProductFreeFood ? 0 : Math.round(scaledSynValue * 2) / 2;
+
         return {
           barcode: product.code,
           name: `${productName}${product.brands ? ` (${product.brands})` : ''}`,
-          synValue: Math.round(scaledSynValue * 2) / 2, // Round to 0.5 increments
-          isFreeFood: isFreeFood(nutrition, productName),
+          synValue: finalSynValue,
+          isFreeFood: isProductFreeFood,
           isSpeedFood: isSpeedFood(productName, product.categories_tags),
           nutrition,
           image: product.image_url,
