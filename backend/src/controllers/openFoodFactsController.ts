@@ -29,7 +29,15 @@ export const searchByBarcode = async (req: AuthRequest, res: Response) => {
     const servingSizeStr = product.serving_size || '100g';
     // Extract number from strings like "1 serving (14 g)" or "20 g"
     const match = servingSizeStr.match(/\((\d+\.?\d*)\s*g\)|(\d+\.?\d*)\s*g/);
-    const portionSize = match ? parseFloat(match[1] || match[2]) : 100;
+    let portionSize = match ? parseFloat(match[1] || match[2]) : 100;
+
+    // Validation: cap serving sizes at 200g to avoid whole-package values
+    // Open Food Facts sometimes returns "1 quiche (550g)" which skews syn values
+    if (portionSize > 200) {
+      console.log(`⚠️ Capping serving size for ${productName}: ${servingSizeStr} (${portionSize}g) → 100g`);
+      portionSize = 100; // Default to per-100g value
+    }
+
     const scaledSynValue = synValuePer100g * (portionSize / 100);
 
     // Check if this is a free food
@@ -86,7 +94,15 @@ export const searchByName = async (req: AuthRequest, res: Response) => {
         const servingSizeStr = product.serving_size || '100g';
         // Extract number from strings like "1 serving (14 g)" or "20 g"
         const match = servingSizeStr.match(/\((\d+\.?\d*)\s*g\)|(\d+\.?\d*)\s*g/);
-        const portionSize = match ? parseFloat(match[1] || match[2]) : 100;
+        let portionSize = match ? parseFloat(match[1] || match[2]) : 100;
+
+        // Validation: cap serving sizes at 200g to avoid whole-package values
+        // Open Food Facts sometimes returns "1 quiche (550g)" which skews syn values
+        if (portionSize > 200) {
+          console.log(`⚠️ Capping serving size for ${productName}: ${servingSizeStr} (${portionSize}g) → 100g`);
+          portionSize = 100; // Default to per-100g value
+        }
+
         const scaledSynValue = synValuePer100g * (portionSize / 100);
 
         // Check if this is a free food - free foods always have 0 syns
