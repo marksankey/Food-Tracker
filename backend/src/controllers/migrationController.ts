@@ -10,17 +10,50 @@ interface FoodRecord {
   category: string;
 }
 
+export const checkSynValues = async (req: Request, res: Response) => {
+  try {
+    // Get all products to check their current state
+    const stmt = db.prepare(`
+      SELECT id, name, syn_value, portion_size, portion_unit, category
+      FROM foods
+      ORDER BY name
+    `);
+
+    const products = stmt.all() as FoodRecord[];
+
+    res.json({
+      success: true,
+      count: products.length,
+      products: products.map(p => ({
+        name: p.name,
+        synValue: p.syn_value,
+        portionSize: p.portion_size,
+        portionUnit: p.portion_unit,
+        category: p.category,
+        needsFix: p.category === 'commercial' && p.portion_size !== 100 && p.syn_value > 0
+      }))
+    });
+  } catch (error) {
+    console.error('❌ Check failed:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Check failed',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
 export const fixSynValues = async (req: Request, res: Response) => {
   try {
     console.log('🔧 Starting syn value migration...\n');
 
     // Get all commercial products (from Open Food Facts)
+    // Note: Removed syn_value > 0 check to also fix products with 0 values
     const stmt = db.prepare(`
       SELECT id, name, syn_value, portion_size, portion_unit, category
       FROM foods
       WHERE category = 'commercial'
       AND portion_size != 100
-      AND syn_value > 0
     `);
 
     const products = stmt.all() as FoodRecord[];

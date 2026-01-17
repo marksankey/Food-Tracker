@@ -22,18 +22,23 @@ export const searchByBarcode = async (req: AuthRequest, res: Response) => {
     }
 
     const nutrition = getNutrition(product);
-    const synValue = calculateSyns(nutrition);
+    const synValuePer100g = calculateSyns(nutrition);
     const productName = product.product_name || 'Unknown Product';
+
+    // Scale syn value from per-100g to per-serving
+    const servingSizeStr = product.serving_size || '100g';
+    const portionSize = parseFloat(servingSizeStr) || 100;
+    const scaledSynValue = synValuePer100g * (portionSize / 100);
 
     res.json({
       barcode: product.code,
       name: `${productName}${product.brands ? ` (${product.brands})` : ''}`,
-      synValue,
+      synValue: Math.round(scaledSynValue * 2) / 2, // Round to 0.5 increments
       isFreeFood: isFreeFood(nutrition, productName),
       isSpeedFood: isSpeedFood(productName, product.categories_tags),
       nutrition,
       image: product.image_url,
-      servingSize: product.serving_size || '100g',
+      servingSize: servingSizeStr,
       categories: product.categories_tags || []
     });
   } catch (error) {
@@ -58,18 +63,23 @@ export const searchByName = async (req: AuthRequest, res: Response) => {
 
     const productsWithSyns = results.products.map(product => {
       const nutrition = getNutrition(product);
-      const synValue = calculateSyns(nutrition);
+      const synValuePer100g = calculateSyns(nutrition);
       const productName = product.product_name || 'Unknown Product';
+
+      // Scale syn value from per-100g to per-serving
+      const servingSizeStr = product.serving_size || '100g';
+      const portionSize = parseFloat(servingSizeStr) || 100;
+      const scaledSynValue = synValuePer100g * (portionSize / 100);
 
       return {
         barcode: product.code,
         name: `${productName}${product.brands ? ` (${product.brands})` : ''}`,
-        synValue,
+        synValue: Math.round(scaledSynValue * 2) / 2, // Round to 0.5 increments
         isFreeFood: isFreeFood(nutrition, productName),
         isSpeedFood: isSpeedFood(productName, product.categories_tags),
         nutrition,
         image: product.image_url,
-        servingSize: product.serving_size || '100g',
+        servingSize: servingSizeStr,
         categories: product.categories_tags || []
       };
     });
