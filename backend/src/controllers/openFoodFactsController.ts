@@ -27,7 +27,9 @@ export const searchByBarcode = async (req: AuthRequest, res: Response) => {
 
     // Scale syn value from per-100g to per-serving
     const servingSizeStr = product.serving_size || '100g';
-    const portionSize = parseFloat(servingSizeStr) || 100;
+    // Extract number from strings like "1 serving (14 g)" or "20 g"
+    const match = servingSizeStr.match(/\((\d+\.?\d*)\s*g\)|(\d+\.?\d*)\s*g/);
+    const portionSize = match ? parseFloat(match[1] || match[2]) : 100;
     const scaledSynValue = synValuePer100g * (portionSize / 100);
 
     // Debug logging
@@ -69,26 +71,44 @@ export const searchByName = async (req: AuthRequest, res: Response) => {
     const results = await searchProducts(query, page, 10);
 
     const productsWithSyns = results.products.map(product => {
-      const nutrition = getNutrition(product);
-      const synValuePer100g = calculateSyns(nutrition);
-      const productName = product.product_name || 'Unknown Product';
+      try {
+        const nutrition = getNutrition(product);
+        const synValuePer100g = calculateSyns(nutrition);
+        const productName = product.product_name || 'Unknown Product';
 
-      // Scale syn value from per-100g to per-serving
-      const servingSizeStr = product.serving_size || '100g';
-      const portionSize = parseFloat(servingSizeStr) || 100;
-      const scaledSynValue = synValuePer100g * (portionSize / 100);
+        // Scale syn value from per-100g to per-serving
+        const servingSizeStr = product.serving_size || '100g';
+        // Extract number from strings like "1 serving (14 g)" or "20 g"
+        const match = servingSizeStr.match(/\((\d+\.?\d*)\s*g\)|(\d+\.?\d*)\s*g/);
+        const portionSize = match ? parseFloat(match[1] || match[2]) : 100;
+        const scaledSynValue = synValuePer100g * (portionSize / 100);
 
-      return {
-        barcode: product.code,
-        name: `${productName}${product.brands ? ` (${product.brands})` : ''}`,
-        synValue: Math.round(scaledSynValue * 2) / 2, // Round to 0.5 increments
-        isFreeFood: isFreeFood(nutrition, productName),
-        isSpeedFood: isSpeedFood(productName, product.categories_tags),
-        nutrition,
-        image: product.image_url,
-        servingSize: servingSizeStr,
-        categories: product.categories_tags || []
-      };
+        return {
+          barcode: product.code,
+          name: `${productName}${product.brands ? ` (${product.brands})` : ''}`,
+          synValue: Math.round(scaledSynValue * 2) / 2, // Round to 0.5 increments
+          isFreeFood: isFreeFood(nutrition, productName),
+          isSpeedFood: isSpeedFood(productName, product.categories_tags),
+          nutrition,
+          image: product.image_url,
+          servingSize: servingSizeStr,
+          categories: product.categories_tags || []
+        };
+      } catch (error) {
+        console.error(`Error processing product ${product.code}:`, error);
+        // Return product with default values if processing fails
+        return {
+          barcode: product.code,
+          name: product.product_name || 'Unknown Product',
+          synValue: 0,
+          isFreeFood: false,
+          isSpeedFood: false,
+          nutrition: {},
+          image: product.image_url,
+          servingSize: '100g',
+          categories: []
+        };
+      }
     });
 
     res.json({
@@ -121,7 +141,9 @@ export const saveProduct = async (req: AuthRequest, res: Response) => {
     }
 
     // Parse serving size and scale syn value from per-100g to per-serving
-    const portionSize = parseFloat(servingSize) || 100;
+    // Extract number from strings like "1 serving (14 g)" or "20 g"
+    const match = servingSize?.match(/\((\d+\.?\d*)\s*g\)|(\d+\.?\d*)\s*g/);
+    const portionSize = match ? parseFloat(match[1] || match[2]) : (parseFloat(servingSize) || 100);
     const scaledSynValue = synValue ? (synValue * portionSize / 100) : 0;
 
     const food = FoodModel.create({
