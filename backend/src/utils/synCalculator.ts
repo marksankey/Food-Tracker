@@ -46,7 +46,31 @@ export const isFreeFood = (nutrition: NutritionalInfo, foodName: string): boolea
     return true;
   }
 
-  // List of keywords for free foods
+  // Disqualifying keywords - prepared foods, dishes with added fat/cheese
+  const excludeKeywords = [
+    'quiche', 'pie', 'tart', 'pastry', 'soup', 'sauce', 'cream', 'creamy',
+    'cheese', 'cheddar', 'brie', 'parmesan', 'feta', 'mozzarella',
+    'fried', 'battered', 'breaded', 'crispy', 'chips', 'fries',
+    'salad dressing', 'mayo', 'mayonnaise', 'coleslaw',
+    'butter', 'buttered', 'oil', 'roasted in'
+  ];
+
+  // If it contains disqualifying keywords, it's not free
+  if (excludeKeywords.some(keyword => lowerName.includes(keyword))) {
+    return false;
+  }
+
+  // Nutritional checks - free foods must be low in calories and fat
+  const calories = nutrition.calories || 0;
+  const saturatedFat = nutrition.saturatedFat || 0;
+
+  // If too high in calories or saturated fat, can't be free
+  // Even if it contains a free food name
+  if (calories > 100 || saturatedFat > 2) {
+    return false;
+  }
+
+  // List of keywords for free foods (plain vegetables, fruits, lean proteins)
   const freeKeywords = [
     'egg', 'chicken breast', 'turkey breast', 'white fish', 'cod', 'haddock',
     'prawns', 'shrimp', 'tofu', 'quorn',
