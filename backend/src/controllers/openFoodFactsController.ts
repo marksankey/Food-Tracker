@@ -30,6 +30,13 @@ export const searchByBarcode = async (req: AuthRequest, res: Response) => {
     const portionSize = parseFloat(servingSizeStr) || 100;
     const scaledSynValue = synValuePer100g * (portionSize / 100);
 
+    // Debug logging
+    console.log(`[Barcode Scan] ${productName}`);
+    console.log(`  Nutrition:`, nutrition);
+    console.log(`  Syn per 100g: ${synValuePer100g}`);
+    console.log(`  Serving size: ${servingSizeStr} -> ${portionSize}g`);
+    console.log(`  Scaled syn: ${scaledSynValue} -> ${Math.round(scaledSynValue * 2) / 2}`);
+
     res.json({
       barcode: product.code,
       name: `${productName}${product.brands ? ` (${product.brands})` : ''}`,
