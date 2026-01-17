@@ -96,18 +96,26 @@ export const searchByName = async (req: AuthRequest, res: Response) => {
         const match = servingSizeStr.match(/\((\d+\.?\d*)\s*g\)|(\d+\.?\d*)\s*g/);
         let portionSize = match ? parseFloat(match[1] || match[2]) : 100;
 
+        // Log all calculations for debugging
+        console.log(`📦 ${productName} (${product.code})`);
+        console.log(`   Serving size string: "${servingSizeStr}"`);
+        console.log(`   Parsed portion size: ${portionSize}g`);
+        console.log(`   Syn per 100g: ${synValuePer100g}`);
+
         // Validation: cap serving sizes at 200g to avoid whole-package values
         // Open Food Facts sometimes returns "1 quiche (550g)" which skews syn values
         if (portionSize > 200) {
-          console.log(`⚠️ Capping serving size for ${productName}: ${servingSizeStr} (${portionSize}g) → 100g`);
+          console.log(`   ⚠️ CAPPING ${portionSize}g → 100g`);
           portionSize = 100; // Default to per-100g value
         }
 
         const scaledSynValue = synValuePer100g * (portionSize / 100);
+        console.log(`   Scaled syn: ${scaledSynValue} → rounded: ${Math.round(scaledSynValue * 2) / 2}`);
 
         // Check if this is a free food - free foods always have 0 syns
         const isProductFreeFood = isFreeFood(nutrition, productName);
         const finalSynValue = isProductFreeFood ? 0 : Math.round(scaledSynValue * 2) / 2;
+        console.log(`   Free food: ${isProductFreeFood}, Final syn: ${finalSynValue}\n`);
 
         return {
           barcode: product.code,
