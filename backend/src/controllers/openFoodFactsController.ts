@@ -103,12 +103,16 @@ export const saveProduct = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: 'Product already exists in database' });
     }
 
+    // Parse serving size and scale syn value from per-100g to per-serving
+    const portionSize = parseFloat(servingSize) || 100;
+    const scaledSynValue = synValue ? (synValue * portionSize / 100) : 0;
+
     const food = FoodModel.create({
       name,
-      syn_value: synValue || 0,
+      syn_value: scaledSynValue,
       is_free_food: isFree ? 1 : 0,
       is_speed_food: isSpeed ? 1 : 0,
-      portion_size: parseFloat(servingSize) || 100,
+      portion_size: portionSize,
       portion_unit: 'g',
       category: 'commercial',
       healthy_extra_type: undefined
