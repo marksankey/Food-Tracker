@@ -176,11 +176,11 @@ const Profile = () => {
                       <input
                         type="number"
                         min="0"
-                        placeholder="Stones"
-                        value={kgToStonesPounds(formData.startingWeight).stones || ''}
+                        placeholder="St"
+                        value={formData.startingWeight ? kgToStonesPounds(formData.startingWeight).stones : ''}
                         onChange={(e) => {
                           const stones = parseInt(e.target.value) || 0;
-                          const pounds = kgToStonesPounds(formData.startingWeight).pounds;
+                          const pounds = formData.startingWeight ? kgToStonesPounds(formData.startingWeight).pounds : 0;
                           handleChange('startingWeight', stonesToKg(stones, pounds));
                         }}
                         required
@@ -190,11 +190,11 @@ const Profile = () => {
                         type="number"
                         min="0"
                         max="13"
-                        placeholder="Pounds"
-                        value={kgToStonesPounds(formData.startingWeight).pounds || ''}
+                        placeholder="Lb"
+                        value={formData.startingWeight ? kgToStonesPounds(formData.startingWeight).pounds : ''}
                         onChange={(e) => {
                           const pounds = parseInt(e.target.value) || 0;
-                          const stones = kgToStonesPounds(formData.startingWeight).stones;
+                          const stones = formData.startingWeight ? kgToStonesPounds(formData.startingWeight).stones : 0;
                           handleChange('startingWeight', stonesToKg(stones, pounds));
                         }}
                       />
@@ -207,11 +207,11 @@ const Profile = () => {
                       <input
                         type="number"
                         min="0"
-                        placeholder="Stones"
-                        value={kgToStonesPounds(formData.currentWeight).stones || ''}
+                        placeholder="St"
+                        value={formData.currentWeight ? kgToStonesPounds(formData.currentWeight).stones : ''}
                         onChange={(e) => {
                           const stones = parseInt(e.target.value) || 0;
-                          const pounds = kgToStonesPounds(formData.currentWeight).pounds;
+                          const pounds = formData.currentWeight ? kgToStonesPounds(formData.currentWeight).pounds : 0;
                           handleChange('currentWeight', stonesToKg(stones, pounds));
                         }}
                         required
@@ -221,11 +221,11 @@ const Profile = () => {
                         type="number"
                         min="0"
                         max="13"
-                        placeholder="Pounds"
-                        value={kgToStonesPounds(formData.currentWeight).pounds || ''}
+                        placeholder="Lb"
+                        value={formData.currentWeight ? kgToStonesPounds(formData.currentWeight).pounds : ''}
                         onChange={(e) => {
                           const pounds = parseInt(e.target.value) || 0;
-                          const stones = kgToStonesPounds(formData.currentWeight).stones;
+                          const stones = formData.currentWeight ? kgToStonesPounds(formData.currentWeight).stones : 0;
                           handleChange('currentWeight', stonesToKg(stones, pounds));
                         }}
                       />
@@ -238,11 +238,11 @@ const Profile = () => {
                       <input
                         type="number"
                         min="0"
-                        placeholder="Stones"
-                        value={kgToStonesPounds(formData.targetWeight).stones || ''}
+                        placeholder="St"
+                        value={formData.targetWeight ? kgToStonesPounds(formData.targetWeight).stones : ''}
                         onChange={(e) => {
                           const stones = parseInt(e.target.value) || 0;
-                          const pounds = kgToStonesPounds(formData.targetWeight).pounds;
+                          const pounds = formData.targetWeight ? kgToStonesPounds(formData.targetWeight).pounds : 0;
                           handleChange('targetWeight', stonesToKg(stones, pounds));
                         }}
                         required
@@ -252,11 +252,11 @@ const Profile = () => {
                         type="number"
                         min="0"
                         max="13"
-                        placeholder="Pounds"
-                        value={kgToStonesPounds(formData.targetWeight).pounds || ''}
+                        placeholder="Lb"
+                        value={formData.targetWeight ? kgToStonesPounds(formData.targetWeight).pounds : ''}
                         onChange={(e) => {
                           const pounds = parseInt(e.target.value) || 0;
-                          const stones = kgToStonesPounds(formData.targetWeight).stones;
+                          const stones = formData.targetWeight ? kgToStonesPounds(formData.targetWeight).stones : 0;
                           handleChange('targetWeight', stonesToKg(stones, pounds));
                         }}
                       />
@@ -269,7 +269,7 @@ const Profile = () => {
                       <input
                         type="number"
                         min="0"
-                        placeholder="Feet"
+                        placeholder="Ft"
                         value={formData.height ? cmToFeetInches(formData.height).feet : ''}
                         onChange={(e) => {
                           const feet = parseInt(e.target.value) || 0;
@@ -282,7 +282,7 @@ const Profile = () => {
                         type="number"
                         min="0"
                         max="11"
-                        placeholder="Inches"
+                        placeholder="In"
                         value={formData.height ? cmToFeetInches(formData.height).inches : ''}
                         onChange={(e) => {
                           const inches = parseInt(e.target.value) || 0;
