@@ -74,4 +74,30 @@ export class FoodModel {
     const stmt = db.prepare(sql);
     return stmt.all(...params) as Food[];
   }
+
+  static findRecent(days: number = 7, limit: number = 100): Food[] {
+    const stmt = db.prepare(`
+      SELECT * FROM foods
+      WHERE created_at >= datetime('now', '-' || ? || ' days')
+      ORDER BY created_at DESC
+      LIMIT ?
+    `);
+    return stmt.all(days, limit) as Food[];
+  }
+
+  static delete(id: string, userId?: string): boolean {
+    // If userId is provided, only delete if the user created it (for user-created foods)
+    // Otherwise, prevent deletion of system foods
+    let sql = 'DELETE FROM foods WHERE id = ?';
+    const params: any[] = [id];
+
+    if (userId) {
+      sql += ' AND created_by = ?';
+      params.push(userId);
+    }
+
+    const stmt = db.prepare(sql);
+    const result = stmt.run(...params);
+    return result.changes > 0;
+  }
 }
