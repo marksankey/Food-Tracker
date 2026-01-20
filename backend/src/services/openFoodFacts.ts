@@ -101,15 +101,22 @@ export const searchProducts = async (
  * Get nutritional information formatted for syn calculation
  */
 export const getNutrition = (product: OpenFoodFactsProduct) => {
+  // Ensure all values are converted to numbers, not strings
+  const toNumber = (value: any): number => {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') return parseFloat(value) || 0;
+    return 0;
+  };
+
   return {
-    calories: product.nutriments?.['energy-kcal_100g'] || 0,
-    saturatedFat: product.nutriments?.['saturated-fat_100g'] || 0,
-    sugars: product.nutriments?.['sugars_100g'] || 0,
-    protein: product.nutriments?.['proteins_100g'] || 0,
-    carbs: product.nutriments?.['carbohydrates_100g'] || 0,
-    fat: product.nutriments?.['fat_100g'] || 0,
-    fiber: product.nutriments?.['fiber_100g'] || 0,
-    salt: product.nutriments?.['salt_100g'] || 0
+    calories: toNumber(product.nutriments?.['energy-kcal_100g']),
+    saturatedFat: toNumber(product.nutriments?.['saturated-fat_100g']),
+    sugars: toNumber(product.nutriments?.['sugars_100g']),
+    protein: toNumber(product.nutriments?.['proteins_100g']),
+    carbs: toNumber(product.nutriments?.['carbohydrates_100g']),
+    fat: toNumber(product.nutriments?.['fat_100g']),
+    fiber: toNumber(product.nutriments?.['fiber_100g']),
+    salt: toNumber(product.nutriments?.['salt_100g'])
   };
 };
 
