@@ -57,7 +57,13 @@ export const searchByBarcode = async (req: AuthRequest, res: Response) => {
 
     // Check if this is a free food
     const isProductFreeFood = isFreeFood(nutrition, productName);
-    const finalSynValue = isProductFreeFood ? 0 : Math.round(scaledSynValue * 2) / 2;
+    let finalSynValue = isProductFreeFood ? 0 : Math.round(scaledSynValue * 2) / 2;
+
+    // Ensure finalSynValue is always a valid number
+    if (typeof finalSynValue !== 'number' || isNaN(finalSynValue)) {
+      console.log(`  ⚠️ Invalid syn value (${finalSynValue}), defaulting to 0`);
+      finalSynValue = 0;
+    }
 
     // Debug logging
     console.log(`[Barcode Scan] ${productName}`);
@@ -71,7 +77,7 @@ export const searchByBarcode = async (req: AuthRequest, res: Response) => {
     res.json({
       barcode: product.code,
       name: `${productName}${product.brands ? ` (${product.brands})` : ''}`,
-      synValue: finalSynValue,
+      synValue: Number(finalSynValue), // Explicitly convert to number
       isFreeFood: isProductFreeFood,
       isSpeedFood: isSpeedFood(productName, product.categories_tags),
       nutrition,
@@ -129,13 +135,20 @@ export const searchByName = async (req: AuthRequest, res: Response) => {
 
         // Check if this is a free food - free foods always have 0 syns
         const isProductFreeFood = isFreeFood(nutrition, productName);
-        const finalSynValue = isProductFreeFood ? 0 : Math.round(scaledSynValue * 2) / 2;
+        let finalSynValue = isProductFreeFood ? 0 : Math.round(scaledSynValue * 2) / 2;
+
+        // Ensure finalSynValue is always a valid number
+        if (typeof finalSynValue !== 'number' || isNaN(finalSynValue)) {
+          console.log(`   ⚠️ Invalid syn value (${finalSynValue}), defaulting to 0`);
+          finalSynValue = 0;
+        }
+
         console.log(`   Free food: ${isProductFreeFood}, Final syn: ${finalSynValue}\n`);
 
         return {
           barcode: product.code,
           name: `${productName}${product.brands ? ` (${product.brands})` : ''}`,
-          synValue: finalSynValue,
+          synValue: Number(finalSynValue), // Explicitly convert to number
           isFreeFood: isProductFreeFood,
           isSpeedFood: isSpeedFood(productName, product.categories_tags),
           nutrition,
@@ -145,17 +158,19 @@ export const searchByName = async (req: AuthRequest, res: Response) => {
         };
       } catch (error) {
         console.error(`Error processing product ${product.code}:`, error);
-        // Return product with default values if processing fails
+        // Return product with default values if processing fails, but keep nutrition data
+        const nutrition = getNutrition(product);
+        const productName = product.product_name || 'Unknown Product';
         return {
           barcode: product.code,
-          name: product.product_name || 'Unknown Product',
+          name: `${productName}${product.brands ? ` (${product.brands})` : ''}`,
           synValue: 0,
           isFreeFood: false,
           isSpeedFood: false,
-          nutrition: {},
+          nutrition,
           image: product.image_url,
-          servingSize: '100g',
-          categories: []
+          servingSize: product.serving_size || '100g',
+          categories: product.categories_tags || []
         };
       }
     });

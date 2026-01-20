@@ -26,9 +26,12 @@ const ProductSearch = ({ onProductSaved }: ProductSearchProps) => {
     try {
       if (searchType === 'barcode') {
         const response = await productsAPI.searchByBarcode(searchQuery);
+        console.log('Barcode search response:', response.data);
         setProducts([response.data]);
       } else {
         const response = await productsAPI.searchByName(searchQuery);
+        console.log('Name search response:', response.data);
+        console.log('First product synValue:', response.data.products[0]?.synValue);
         setProducts(response.data.products);
       }
     } catch (err: any) {
@@ -149,7 +152,7 @@ const ProductSearch = ({ onProductSaved }: ProductSearchProps) => {
                   {product.isSpeedFood && <span className="badge badge-speed">Speed Food</span>}
                 </div>
                 <div className="product-syns">
-                  <span className="syn-value">{product.synValue}</span>
+                  <span className="syn-value">{product.synValue ?? 0}</span>
                   <span className="syn-label">syns per {product.servingSize}</span>
                 </div>
                 <div className="product-nutrition">
