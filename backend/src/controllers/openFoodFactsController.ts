@@ -2,7 +2,22 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/noauth.js';
 import { getProductByBarcode, searchProducts, getNutrition } from '../services/openFoodFacts.js';
 import { calculateSyns, isFreeFood, isSpeedFood } from '../utils/synCalculator.js';
-import { FoodModel } from '../models/Food.js';
+import { FoodModel, Food } from '../models/Food.js';
+
+// Helper function to transform snake_case database fields to camelCase for frontend
+const transformFoodForFrontend = (food: Food) => ({
+  id: food.id,
+  name: food.name,
+  synValue: food.syn_value,
+  isFreeFood: Boolean(food.is_free_food),
+  isSpeedFood: Boolean(food.is_speed_food),
+  healthyExtraType: food.healthy_extra_type || undefined,
+  portionSize: food.portion_size,
+  portionUnit: food.portion_unit,
+  category: food.category,
+  createdBy: food.created_by || undefined,
+  createdAt: food.created_at
+});
 
 /**
  * Search products by barcode
@@ -174,15 +189,14 @@ export const saveProduct = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: 'Product already exists in database' });
     }
 
-    // Parse serving size and scale syn value from per-100g to per-serving
-    // Extract number from strings like "1 serving (14 g)" or "20 g"
+    // Parse serving size - extract number from strings like "1 serving (14 g)" or "20 g"
+    // Note: synValue is already calculated per-serving, not per-100g, so we don't scale it
     const match = servingSize?.match(/\((\d+\.?\d*)\s*g\)|(\d+\.?\d*)\s*g/);
     const portionSize = match ? parseFloat(match[1] || match[2]) : (parseFloat(servingSize) || 100);
-    const scaledSynValue = synValue ? (synValue * portionSize / 100) : 0;
 
     const food = FoodModel.create({
       name,
-      syn_value: scaledSynValue,
+      syn_value: synValue || 0,
       is_free_food: isFree ? 1 : 0,
       is_speed_food: isSpeed ? 1 : 0,
       portion_size: portionSize,
@@ -191,7 +205,7 @@ export const saveProduct = async (req: AuthRequest, res: Response) => {
       healthy_extra_type: undefined
     }, req.userId);
 
-    res.status(201).json(food);
+    res.status(201).json(transformFoodForFrontend(food));
   } catch (error) {
     console.error('Save product error:', error);
     res.status(500).json({ message: 'Server error' });
