@@ -20,8 +20,15 @@ const Profile = () => {
   // Conversion helpers
   const kgToStonesPounds = (kg: number) => {
     const totalPounds = kg * 2.20462;
-    const stones = Math.floor(totalPounds / 14);
-    const pounds = Math.round(totalPounds % 14);
+    let stones = Math.floor(totalPounds / 14);
+    let pounds = Math.round(totalPounds % 14);
+
+    // Handle rollover: if pounds = 14, that's actually 1 more stone
+    if (pounds === 14) {
+      stones += 1;
+      pounds = 0;
+    }
+
     return { stones, pounds };
   };
 
