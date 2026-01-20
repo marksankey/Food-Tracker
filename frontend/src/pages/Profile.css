@@ -55,3 +55,73 @@
 .profile-display {
   padding: 20px 0;
 }
+
+.unit-toggle {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.unit-toggle label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 500;
+  color: #666;
+}
+
+.toggle-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.toggle-btn {
+  padding: 10px 20px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.toggle-btn:hover {
+  border-color: #007bff;
+}
+
+.toggle-btn.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.form-group-imperial {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group-imperial label {
+  font-weight: 500;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.imperial-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.imperial-inputs input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.imperial-inputs span {
+  color: #666;
+  font-weight: 500;
+  min-width: 25px;
+}

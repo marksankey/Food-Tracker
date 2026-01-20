@@ -4,6 +4,7 @@ import './Profile.css';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const [unitSystem, setUnitSystem] = useState<'metric' | 'imperial'>('metric');
   const [formData, setFormData] = useState({
     startingWeight: 0,
     currentWeight: 0,
@@ -15,6 +16,29 @@ const Profile = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Conversion helpers
+  const kgToStonesPounds = (kg: number) => {
+    const totalPounds = kg * 2.20462;
+    const stones = Math.floor(totalPounds / 14);
+    const pounds = Math.round(totalPounds % 14);
+    return { stones, pounds };
+  };
+
+  const stonesToKg = (stones: number, pounds: number) => {
+    return ((stones * 14) + pounds) / 2.20462;
+  };
+
+  const cmToFeetInches = (cm: number) => {
+    const totalInches = cm / 2.54;
+    const feet = Math.floor(totalInches / 12);
+    const inches = Math.round(totalInches % 12);
+    return { feet, inches };
+  };
+
+  const feetInchesToCm = (feet: number, inches: number) => {
+    return ((feet * 12) + inches) * 2.54;
+  };
 
   useEffect(() => {
     loadProfile();
@@ -82,45 +106,195 @@ const Profile = () => {
 
         {isEditing ? (
           <form onSubmit={handleSubmit}>
+            <div className="unit-toggle">
+              <label>Unit System:</label>
+              <div className="toggle-buttons">
+                <button
+                  type="button"
+                  className={`toggle-btn ${unitSystem === 'metric' ? 'active' : ''}`}
+                  onClick={() => setUnitSystem('metric')}
+                >
+                  Metric (kg, cm)
+                </button>
+                <button
+                  type="button"
+                  className={`toggle-btn ${unitSystem === 'imperial' ? 'active' : ''}`}
+                  onClick={() => setUnitSystem('imperial')}
+                >
+                  Imperial (st, lb, ft, in)
+                </button>
+              </div>
+            </div>
+
             <div className="form-grid">
-              <div className="form-group">
-                <label>Starting Weight (kg)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={formData.startingWeight || ''}
-                  onChange={(e) => handleChange('startingWeight', parseFloat(e.target.value))}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Current Weight (kg)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={formData.currentWeight || ''}
-                  onChange={(e) => handleChange('currentWeight', parseFloat(e.target.value))}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Target Weight (kg)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={formData.targetWeight || ''}
-                  onChange={(e) => handleChange('targetWeight', parseFloat(e.target.value))}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Height (cm)</label>
-                <input
-                  type="number"
-                  value={formData.height || ''}
-                  onChange={(e) => handleChange('height', parseFloat(e.target.value))}
-                />
-              </div>
+              {unitSystem === 'metric' ? (
+                <>
+                  <div className="form-group">
+                    <label>Starting Weight (kg)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={formData.startingWeight || ''}
+                      onChange={(e) => handleChange('startingWeight', parseFloat(e.target.value))}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Current Weight (kg)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={formData.currentWeight || ''}
+                      onChange={(e) => handleChange('currentWeight', parseFloat(e.target.value))}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Target Weight (kg)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={formData.targetWeight || ''}
+                      onChange={(e) => handleChange('targetWeight', parseFloat(e.target.value))}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Height (cm)</label>
+                    <input
+                      type="number"
+                      value={formData.height || ''}
+                      onChange={(e) => handleChange('height', parseFloat(e.target.value))}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="form-group-imperial">
+                    <label>Starting Weight</label>
+                    <div className="imperial-inputs">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Stones"
+                        value={kgToStonesPounds(formData.startingWeight).stones || ''}
+                        onChange={(e) => {
+                          const stones = parseInt(e.target.value) || 0;
+                          const pounds = kgToStonesPounds(formData.startingWeight).pounds;
+                          handleChange('startingWeight', stonesToKg(stones, pounds));
+                        }}
+                        required
+                      />
+                      <span>st</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="13"
+                        placeholder="Pounds"
+                        value={kgToStonesPounds(formData.startingWeight).pounds || ''}
+                        onChange={(e) => {
+                          const pounds = parseInt(e.target.value) || 0;
+                          const stones = kgToStonesPounds(formData.startingWeight).stones;
+                          handleChange('startingWeight', stonesToKg(stones, pounds));
+                        }}
+                      />
+                      <span>lb</span>
+                    </div>
+                  </div>
+                  <div className="form-group-imperial">
+                    <label>Current Weight</label>
+                    <div className="imperial-inputs">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Stones"
+                        value={kgToStonesPounds(formData.currentWeight).stones || ''}
+                        onChange={(e) => {
+                          const stones = parseInt(e.target.value) || 0;
+                          const pounds = kgToStonesPounds(formData.currentWeight).pounds;
+                          handleChange('currentWeight', stonesToKg(stones, pounds));
+                        }}
+                        required
+                      />
+                      <span>st</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="13"
+                        placeholder="Pounds"
+                        value={kgToStonesPounds(formData.currentWeight).pounds || ''}
+                        onChange={(e) => {
+                          const pounds = parseInt(e.target.value) || 0;
+                          const stones = kgToStonesPounds(formData.currentWeight).stones;
+                          handleChange('currentWeight', stonesToKg(stones, pounds));
+                        }}
+                      />
+                      <span>lb</span>
+                    </div>
+                  </div>
+                  <div className="form-group-imperial">
+                    <label>Target Weight</label>
+                    <div className="imperial-inputs">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Stones"
+                        value={kgToStonesPounds(formData.targetWeight).stones || ''}
+                        onChange={(e) => {
+                          const stones = parseInt(e.target.value) || 0;
+                          const pounds = kgToStonesPounds(formData.targetWeight).pounds;
+                          handleChange('targetWeight', stonesToKg(stones, pounds));
+                        }}
+                        required
+                      />
+                      <span>st</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="13"
+                        placeholder="Pounds"
+                        value={kgToStonesPounds(formData.targetWeight).pounds || ''}
+                        onChange={(e) => {
+                          const pounds = parseInt(e.target.value) || 0;
+                          const stones = kgToStonesPounds(formData.targetWeight).stones;
+                          handleChange('targetWeight', stonesToKg(stones, pounds));
+                        }}
+                      />
+                      <span>lb</span>
+                    </div>
+                  </div>
+                  <div className="form-group-imperial">
+                    <label>Height</label>
+                    <div className="imperial-inputs">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Feet"
+                        value={formData.height ? cmToFeetInches(formData.height).feet : ''}
+                        onChange={(e) => {
+                          const feet = parseInt(e.target.value) || 0;
+                          const inches = formData.height ? cmToFeetInches(formData.height).inches : 0;
+                          handleChange('height', feetInchesToCm(feet, inches));
+                        }}
+                      />
+                      <span>ft</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="11"
+                        placeholder="Inches"
+                        value={formData.height ? cmToFeetInches(formData.height).inches : ''}
+                        onChange={(e) => {
+                          const inches = parseInt(e.target.value) || 0;
+                          const feet = formData.height ? cmToFeetInches(formData.height).feet : 0;
+                          handleChange('height', feetInchesToCm(feet, inches));
+                        }}
+                      />
+                      <span>in</span>
+                    </div>
+                  </div>
+                </>
+              )}
               <div className="form-group">
                 <label>Daily Syn Allowance</label>
                 <input
@@ -170,22 +344,63 @@ const Profile = () => {
           </form>
         ) : (
           <div className="profile-display">
+            <div className="unit-toggle">
+              <label>Display units:</label>
+              <div className="toggle-buttons">
+                <button
+                  type="button"
+                  className={`toggle-btn ${unitSystem === 'metric' ? 'active' : ''}`}
+                  onClick={() => setUnitSystem('metric')}
+                >
+                  Metric
+                </button>
+                <button
+                  type="button"
+                  className={`toggle-btn ${unitSystem === 'imperial' ? 'active' : ''}`}
+                  onClick={() => setUnitSystem('imperial')}
+                >
+                  Imperial
+                </button>
+              </div>
+            </div>
             <div className="info-grid">
               <div className="info-item">
                 <span className="info-label">Starting Weight:</span>
-                <span className="info-value">{formData.startingWeight} kg</span>
+                <span className="info-value">
+                  {unitSystem === 'metric'
+                    ? `${formData.startingWeight.toFixed(1)} kg`
+                    : `${kgToStonesPounds(formData.startingWeight).stones} st ${kgToStonesPounds(formData.startingWeight).pounds} lb`
+                  }
+                </span>
               </div>
               <div className="info-item">
                 <span className="info-label">Current Weight:</span>
-                <span className="info-value">{formData.currentWeight} kg</span>
+                <span className="info-value">
+                  {unitSystem === 'metric'
+                    ? `${formData.currentWeight.toFixed(1)} kg`
+                    : `${kgToStonesPounds(formData.currentWeight).stones} st ${kgToStonesPounds(formData.currentWeight).pounds} lb`
+                  }
+                </span>
               </div>
               <div className="info-item">
                 <span className="info-label">Target Weight:</span>
-                <span className="info-value">{formData.targetWeight} kg</span>
+                <span className="info-value">
+                  {unitSystem === 'metric'
+                    ? `${formData.targetWeight.toFixed(1)} kg`
+                    : `${kgToStonesPounds(formData.targetWeight).stones} st ${kgToStonesPounds(formData.targetWeight).pounds} lb`
+                  }
+                </span>
               </div>
               <div className="info-item">
                 <span className="info-label">Height:</span>
-                <span className="info-value">{formData.height ? `${formData.height} cm` : 'Not set'}</span>
+                <span className="info-value">
+                  {formData.height
+                    ? unitSystem === 'metric'
+                      ? `${formData.height} cm`
+                      : `${cmToFeetInches(formData.height).feet} ft ${cmToFeetInches(formData.height).inches} in`
+                    : 'Not set'
+                  }
+                </span>
               </div>
               <div className="info-item">
                 <span className="info-label">BMI:</span>
