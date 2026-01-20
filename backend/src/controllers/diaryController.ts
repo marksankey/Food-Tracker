@@ -30,7 +30,7 @@ export const getDailySummary = async (req: AuthRequest, res: Response) => {
 
     res.json({
       ...summary,
-      remainingSyns: (profile?.daily_syn_allowance || 15) - summary.totalSyns
+      remainingSyns: (profile?.dailySynAllowance || 15) - summary.totalSyns
     });
   } catch (error) {
     console.error('Get daily summary error:', error);
@@ -40,7 +40,17 @@ export const getDailySummary = async (req: AuthRequest, res: Response) => {
 
 export const createDiaryEntry = async (req: AuthRequest, res: Response) => {
   try {
-    const entry = DiaryModel.create(req.userId!, req.body);
+    // Transform camelCase from frontend to snake_case for database
+    const entryData = {
+      date: req.body.date,
+      meal_type: req.body.mealType,
+      food_id: req.body.foodId,
+      quantity: req.body.quantity,
+      syn_value_consumed: req.body.synValueConsumed,
+      is_healthy_extra: req.body.isHealthyExtra ? 1 : 0
+    };
+
+    const entry = DiaryModel.create(req.userId!, entryData);
     res.status(201).json(entry);
   } catch (error) {
     console.error('Create diary entry error:', error);
