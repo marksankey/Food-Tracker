@@ -71,3 +71,30 @@ export const createFood = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+export const getRecentFoods = async (req: AuthRequest, res: Response) => {
+  try {
+    const days = parseInt(req.query.days as string) || 7;
+    const limit = parseInt(req.query.limit as string) || 100;
+
+    const foods = FoodModel.findRecent(days, limit);
+    const transformedFoods = foods.map(transformFoodForFrontend);
+    res.json(transformedFoods);
+  } catch (error) {
+    console.error('Get recent foods error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const deleteFood = async (req: AuthRequest, res: Response) => {
+  try {
+    const deleted = FoodModel.delete(req.params.id, req.userId);
+    if (!deleted) {
+      return res.status(404).json({ message: 'Food not found or you do not have permission to delete it' });
+    }
+    res.status(204).send();
+  } catch (error) {
+    console.error('Delete food error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

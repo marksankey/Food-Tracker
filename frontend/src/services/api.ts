@@ -38,6 +38,12 @@ export const foodAPI = {
 
   getAll: (limit?: number, offset?: number) =>
     api.get<Food[]>('/foods', { params: { limit, offset } }),
+
+  getRecent: (days?: number, limit?: number) =>
+    api.get<Food[]>('/foods/recent', { params: { days, limit } }),
+
+  delete: (id: string) =>
+    api.delete(`/foods/${id}`),
 };
 
 // Food Diary API

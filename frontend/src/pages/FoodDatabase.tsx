@@ -10,6 +10,7 @@ const FoodDatabase = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   useEffect(() => {
     loadFoods();
@@ -23,6 +24,30 @@ const FoodDatabase = () => {
       console.error('Failed to load foods:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadRecentFoods = async () => {
+    try {
+      setIsLoading(true);
+      const response = await foodAPI.getRecent(7);
+      setFoods(response.data);
+      setFilterCategory('recent');
+    } catch (error) {
+      console.error('Failed to load recent foods:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await foodAPI.delete(id);
+      setFoods(foods.filter(food => food.id !== id));
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error('Failed to delete food:', error);
+      alert('Failed to delete food item');
     }
   };
 
@@ -48,6 +73,7 @@ const FoodDatabase = () => {
     if (filterCategory === 'free') return food.isFreeFood;
     if (filterCategory === 'speed') return food.isSpeedFood;
     if (filterCategory === 'healthyExtra') return food.healthyExtraType;
+    if (filterCategory === 'recent') return true; // Already filtered by backend
     return true;
   });
 
@@ -89,9 +115,15 @@ const FoodDatabase = () => {
             <div className="filters">
               <button
                 className={`filter-btn ${filterCategory === 'all' ? 'active' : ''}`}
-                onClick={() => setFilterCategory('all')}
+                onClick={() => { setFilterCategory('all'); loadFoods(); }}
               >
                 All Foods
+              </button>
+              <button
+                className={`filter-btn ${filterCategory === 'recent' ? 'active' : ''}`}
+                onClick={loadRecentFoods}
+              >
+                Recent (7 days)
               </button>
               <button
                 className={`filter-btn ${filterCategory === 'free' ? 'active' : ''}`}
@@ -139,6 +171,32 @@ const FoodDatabase = () => {
                       <div className="food-portion">
                         per {food.portionSize} {food.portionUnit}
                       </div>
+                    </div>
+                    <div className="food-actions">
+                      {deleteConfirm === food.id ? (
+                        <div className="delete-confirm">
+                          <span>Delete this item?</span>
+                          <button
+                            className="btn btn-danger btn-sm"
+                            onClick={() => handleDelete(food.id)}
+                          >
+                            Yes
+                          </button>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => setDeleteConfirm(null)}
+                          >
+                            No
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => setDeleteConfirm(food.id)}
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
