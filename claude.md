@@ -185,6 +185,14 @@ npm run preview      # Test production build
 ## Important Notes
 
 ### Recent Changes
+**2026-01-20**: Major improvements to syn calculation accuracy
+- Fixed serving size parsing to handle complex formats (e.g., "100g/3 slices")
+- Capped serving sizes at 200g to prevent inflated syn values from large portions
+- Improved free food detection to exclude prepared dishes (e.g., pasta sauce)
+- Added comprehensive logging for debugging syn calculations across all products
+- Ensured free foods consistently display 0 syns regardless of quantity
+- Related PRs: #21, #22, #23, #24, #25
+
 **2026-01-11**: Fixed TypeScript build error on Render deployment
 - Issue: `generateToken` was not imported in `authController.ts`
 - Solution: Added `generateToken` to imports from `noauth.js` middleware
@@ -348,8 +356,8 @@ Create test users with different scenarios:
 - Branch names must start with 'claude/' and include session ID for push to succeed
 
 ### Current Development Branch
-- Working branch: `claude/debug-render-deployment-7ZnIO`
-- Purpose: Debug and fix Render deployment issues
+- Working branch: `claude/update-claude-md-1y0FO`
+- Purpose: Update documentation to reflect recent changes
 
 ## Contact & Resources
 
