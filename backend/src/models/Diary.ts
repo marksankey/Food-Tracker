@@ -46,9 +46,29 @@ export class DiaryModel {
     return stmt.get(id) as DiaryEntry | undefined;
   }
 
-  static findByUserAndDate(userId: string, date: string): DiaryEntryWithFood[] {
+  static findByUserAndDate(userId: string, date: string): any[] {
     const stmt = db.prepare(`
-      SELECT fd.*, f.*
+      SELECT
+        fd.id as diary_id,
+        fd.user_id as diary_user_id,
+        fd.date as diary_date,
+        fd.meal_type as diary_meal_type,
+        fd.food_id as diary_food_id,
+        fd.quantity as diary_quantity,
+        fd.syn_value_consumed as diary_syn_value_consumed,
+        fd.is_healthy_extra as diary_is_healthy_extra,
+        fd.created_at as diary_created_at,
+        f.id as food_id,
+        f.name as food_name,
+        f.syn_value as food_syn_value,
+        f.is_free_food as food_is_free_food,
+        f.is_speed_food as food_is_speed_food,
+        f.healthy_extra_type as food_healthy_extra_type,
+        f.portion_size as food_portion_size,
+        f.portion_unit as food_portion_unit,
+        f.category as food_category,
+        f.created_by as food_created_by,
+        f.created_at as food_created_at
       FROM food_diary fd
       LEFT JOIN foods f ON fd.food_id = f.id
       WHERE fd.user_id = ? AND fd.date = ?
@@ -58,27 +78,27 @@ export class DiaryModel {
     const rows = stmt.all(userId, date) as any[];
 
     return rows.map(row => ({
-      id: row.id,
-      user_id: row.user_id,
-      date: row.date,
-      meal_type: row.meal_type,
-      food_id: row.food_id,
-      quantity: row.quantity,
-      syn_value_consumed: row.syn_value_consumed,
-      is_healthy_extra: row.is_healthy_extra,
-      created_at: row.created_at,
+      id: row.diary_id,
+      userId: row.diary_user_id,
+      date: row.diary_date,
+      mealType: row.diary_meal_type,
+      foodId: row.diary_food_id,
+      quantity: row.diary_quantity,
+      synValueConsumed: row.diary_syn_value_consumed,
+      isHealthyExtra: Boolean(row.diary_is_healthy_extra),
+      createdAt: row.diary_created_at,
       food: row.food_id ? {
         id: row.food_id,
-        name: row.name,
-        syn_value: row.syn_value,
-        is_free_food: row.is_free_food,
-        is_speed_food: row.is_speed_food,
-        healthy_extra_type: row.healthy_extra_type,
-        portion_size: row.portion_size,
-        portion_unit: row.portion_unit,
-        category: row.category,
-        created_by: row.created_by,
-        created_at: row.created_at
+        name: row.food_name,
+        synValue: row.food_syn_value,
+        isFreeFood: Boolean(row.food_is_free_food),
+        isSpeedFood: Boolean(row.food_is_speed_food),
+        healthyExtraType: row.food_healthy_extra_type || undefined,
+        portionSize: row.food_portion_size,
+        portionUnit: row.food_portion_unit,
+        category: row.food_category,
+        createdBy: row.food_created_by || undefined,
+        createdAt: row.food_created_at
       } : undefined
     }));
   }
@@ -110,10 +130,10 @@ export class DiaryModel {
   static getDailySummary(userId: string, date: string) {
     const entries = this.findByUserAndDate(userId, date);
 
-    const totalSyns = entries.reduce((sum, entry) => sum + entry.syn_value_consumed, 0);
-    const healthyExtraAUsed = entries.some(entry => entry.is_healthy_extra && entry.food?.healthy_extra_type === 'A');
-    const healthyExtraBUsed = entries.some(entry => entry.is_healthy_extra && entry.food?.healthy_extra_type === 'B');
-    const speedFoodsCount = entries.filter(entry => entry.food?.is_speed_food).length;
+    const totalSyns = entries.reduce((sum, entry) => sum + entry.synValueConsumed, 0);
+    const healthyExtraAUsed = entries.some(entry => entry.isHealthyExtra && entry.food?.healthyExtraType === 'A');
+    const healthyExtraBUsed = entries.some(entry => entry.isHealthyExtra && entry.food?.healthyExtraType === 'B');
+    const speedFoodsCount = entries.filter(entry => entry.food?.isSpeedFood).length;
 
     return {
       date,

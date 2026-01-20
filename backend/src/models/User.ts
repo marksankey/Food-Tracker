@@ -60,9 +60,24 @@ export class UserModel {
     return bcrypt.compare(password, hash);
   }
 
-  static getProfile(userId: string): UserProfile | undefined {
+  static getProfile(userId: string): any | undefined {
     const stmt = db.prepare('SELECT * FROM user_profiles WHERE user_id = ?');
-    return stmt.get(userId) as UserProfile | undefined;
+    const profile = stmt.get(userId) as UserProfile | undefined;
+
+    if (!profile) return undefined;
+
+    // Transform to camelCase for frontend
+    return {
+      id: profile.id,
+      userId: profile.user_id,
+      startingWeight: profile.starting_weight,
+      currentWeight: profile.current_weight,
+      targetWeight: profile.target_weight,
+      height: profile.height,
+      dailySynAllowance: profile.daily_syn_allowance,
+      healthyExtraAAllowance: profile.healthy_extra_a_allowance,
+      healthyExtraBAllowance: profile.healthy_extra_b_allowance
+    };
   }
 
   static updateProfile(userId: string, data: any): UserProfile {

@@ -10,8 +10,18 @@ export interface WeightLog {
   created_at: string;
 }
 
+// Helper function to transform snake_case to camelCase
+const transformWeightLog = (log: WeightLog) => ({
+  id: log.id,
+  userId: log.user_id,
+  date: log.date,
+  weight: log.weight,
+  notes: log.notes,
+  createdAt: log.created_at
+});
+
 export class WeightModel {
-  static create(userId: string, data: Omit<WeightLog, 'id' | 'user_id' | 'created_at'>): WeightLog {
+  static create(userId: string, data: Omit<WeightLog, 'id' | 'user_id' | 'created_at'>): any {
     const id = uuidv4();
 
     const stmt = db.prepare(`
@@ -23,17 +33,19 @@ export class WeightModel {
     return this.findById(id)!;
   }
 
-  static findById(id: string): WeightLog | undefined {
+  static findById(id: string): any | undefined {
     const stmt = db.prepare('SELECT * FROM weight_logs WHERE id = ?');
-    return stmt.get(id) as WeightLog | undefined;
+    const log = stmt.get(id) as WeightLog | undefined;
+    return log ? transformWeightLog(log) : undefined;
   }
 
-  static findByUser(userId: string): WeightLog[] {
+  static findByUser(userId: string): any[] {
     const stmt = db.prepare('SELECT * FROM weight_logs WHERE user_id = ? ORDER BY date DESC');
-    return stmt.all(userId) as WeightLog[];
+    const logs = stmt.all(userId) as WeightLog[];
+    return logs.map(transformWeightLog);
   }
 
-  static update(id: string, userId: string, data: Partial<WeightLog>): WeightLog | undefined {
+  static update(id: string, userId: string, data: Partial<WeightLog>): any | undefined {
     const fields = Object.keys(data)
       .filter(key => key !== 'id' && key !== 'user_id' && key !== 'created_at')
       .map(key => `${key} = ?`)
