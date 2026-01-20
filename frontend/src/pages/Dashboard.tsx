@@ -8,7 +8,31 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [unitSystem, setUnitSystem] = useState<'metric' | 'imperial'>('metric');
   const today = format(new Date(), 'yyyy-MM-dd');
+
+  // Conversion helpers
+  const kgToStonesPounds = (kg: number) => {
+    const totalPounds = kg * 2.20462;
+    let stones = Math.floor(totalPounds / 14);
+    let pounds = Math.round(totalPounds % 14);
+
+    if (pounds === 14) {
+      stones += 1;
+      pounds = 0;
+    }
+
+    return { stones, pounds };
+  };
+
+  const formatWeight = (kg: number) => {
+    if (unitSystem === 'metric') {
+      return `${kg.toFixed(1)} kg`;
+    } else {
+      const { stones, pounds } = kgToStonesPounds(kg);
+      return `${stones} st ${pounds} lb`;
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -90,12 +114,28 @@ const Dashboard = () => {
         </div>
 
         <div className="card weight-summary">
-          <h2>Current Weight</h2>
-          <p className="weight-value">{profile?.currentWeight || 0} kg</p>
-          <p className="weight-target">Target: {profile?.targetWeight || 0} kg</p>
+          <div className="weight-header">
+            <h2>Current Weight</h2>
+            <div className="unit-toggle-small">
+              <button
+                className={`unit-btn ${unitSystem === 'metric' ? 'active' : ''}`}
+                onClick={() => setUnitSystem('metric')}
+              >
+                kg
+              </button>
+              <button
+                className={`unit-btn ${unitSystem === 'imperial' ? 'active' : ''}`}
+                onClick={() => setUnitSystem('imperial')}
+              >
+                st
+              </button>
+            </div>
+          </div>
+          <p className="weight-value">{formatWeight(profile?.currentWeight || 0)}</p>
+          <p className="weight-target">Target: {formatWeight(profile?.targetWeight || 0)}</p>
           <p className="weight-progress">
             {profile && profile.currentWeight > profile.targetWeight
-              ? `${(profile.currentWeight - profile.targetWeight).toFixed(1)} kg to go`
+              ? `${formatWeight(profile.currentWeight - profile.targetWeight)} to go`
               : 'Target reached!'}
           </p>
         </div>
