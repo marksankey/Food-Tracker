@@ -1,4 +1,4 @@
-import { db } from '../config/database.js';
+import { pool } from '../config/database.js';
 import { v4 as uuidv4 } from 'uuid';
 import { Food } from './Food.js';
 
@@ -19,36 +19,35 @@ export interface DiaryEntryWithFood extends DiaryEntry {
 }
 
 export class DiaryModel {
-  static create(userId: string, data: Omit<DiaryEntry, 'id' | 'user_id' | 'created_at'>): DiaryEntry {
+  static async create(userId: string, data: Omit<DiaryEntry, 'id' | 'user_id' | 'created_at'>): Promise<DiaryEntry> {
     const id = uuidv4();
 
-    const stmt = db.prepare(`
-      INSERT INTO food_diary (id, user_id, date, meal_type, food_id, quantity, syn_value_consumed, is_healthy_extra)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    stmt.run(
-      id,
-      userId,
-      data.date,
-      data.meal_type,
-      data.food_id,
-      data.quantity,
-      data.syn_value_consumed,
-      data.is_healthy_extra ? 1 : 0
+    await pool.query(
+      `INSERT INTO food_diary (id, user_id, date, meal_type, food_id, quantity, syn_value_consumed, is_healthy_extra)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        id,
+        userId,
+        data.date,
+        data.meal_type,
+        data.food_id,
+        data.quantity,
+        data.syn_value_consumed,
+        data.is_healthy_extra ? 1 : 0
+      ]
     );
 
     return this.findById(id)!;
   }
 
-  static findById(id: string): DiaryEntry | undefined {
-    const stmt = db.prepare('SELECT * FROM food_diary WHERE id = ?');
-    return stmt.get(id) as DiaryEntry | undefined;
+  static async findById(id: string): Promise<DiaryEntry | undefined> {
+    const result = await pool.query('SELECT * FROM food_diary WHERE id = $1', [id]);
+    return result.rows[0] as DiaryEntry | undefined;
   }
 
-  static findByUserAndDate(userId: string, date: string): any[] {
-    const stmt = db.prepare(`
-      SELECT
+  static async findByUserAndDate(userId: string, date: string): Promise<any[]> {
+    const result = await pool.query(
+      `SELECT
         fd.id as diary_id,
         fd.user_id as diary_user_id,
         fd.date as diary_date,
@@ -71,11 +70,12 @@ export class DiaryModel {
         f.created_at as food_created_at
       FROM food_diary fd
       LEFT JOIN foods f ON fd.food_id = f.id
-      WHERE fd.user_id = ? AND fd.date = ?
-      ORDER BY fd.meal_type, fd.created_at
-    `);
+      WHERE fd.user_id = $1 AND fd.date = $2
+      ORDER BY fd.meal_type, fd.created_at`,
+      [userId, date]
+    );
 
-    const rows = stmt.all(userId, date) as any[];
+    const rows = result.rows;
 
     return rows.map(row => ({
       id: row.diary_id,
@@ -103,32 +103,34 @@ export class DiaryModel {
     }));
   }
 
-  static update(id: string, userId: string, data: Partial<DiaryEntry>): DiaryEntry | undefined {
+  static async update(id: string, userId: string, data: Partial<DiaryEntry>): Promise<DiaryEntry | undefined> {
     const fields = Object.keys(data)
       .filter(key => key !== 'id' && key !== 'user_id' && key !== 'created_at')
-      .map(key => `${key} = ?`)
+      .map((key, index) => `${key} = $${index + 1}`)
       .join(', ');
 
     const values = Object.keys(data)
       .filter(key => key !== 'id' && key !== 'user_id' && key !== 'created_at')
       .map(key => data[key as keyof DiaryEntry]);
 
-    const stmt = db.prepare(`
-      UPDATE food_diary SET ${fields} WHERE id = ? AND user_id = ?
-    `);
+    await pool.query(
+      `UPDATE food_diary SET ${fields} WHERE id = $${values.length + 1} AND user_id = $${values.length + 2}`,
+      [...values, id, userId]
+    );
 
-    stmt.run(...values, id, userId);
     return this.findById(id);
   }
 
-  static delete(id: string, userId: string): boolean {
-    const stmt = db.prepare('DELETE FROM food_diary WHERE id = ? AND user_id = ?');
-    const result = stmt.run(id, userId);
-    return result.changes > 0;
+  static async delete(id: string, userId: string): Promise<boolean> {
+    const result = await pool.query(
+      'DELETE FROM food_diary WHERE id = $1 AND user_id = $2',
+      [id, userId]
+    );
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
-  static getDailySummary(userId: string, date: string) {
-    const entries = this.findByUserAndDate(userId, date);
+  static async getDailySummary(userId: string, date: string) {
+    const entries = await this.findByUserAndDate(userId, date);
 
     const totalSyns = entries.reduce((sum, entry) => sum + entry.synValueConsumed, 0);
     const healthyExtraAUsed = entries.some(entry => entry.isHealthyExtra && entry.food?.healthyExtraType === 'A');

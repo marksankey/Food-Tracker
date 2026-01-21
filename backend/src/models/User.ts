@@ -1,4 +1,4 @@
-import { db } from '../config/database.js';
+import { pool } from '../config/database.js';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -28,41 +28,40 @@ export class UserModel {
     const id = uuidv4();
     const password_hash = await bcrypt.hash(password, 10);
 
-    const stmt = db.prepare(`
-      INSERT INTO users (id, email, password_hash, name)
-      VALUES (?, ?, ?, ?)
-    `);
-
-    stmt.run(id, email, password_hash, name);
+    await pool.query(
+      `INSERT INTO users (id, email, password_hash, name)
+       VALUES ($1, $2, $3, $4)`,
+      [id, email, password_hash, name]
+    );
 
     // Create default profile
     const profileId = uuidv4();
-    const profileStmt = db.prepare(`
-      INSERT INTO user_profiles (id, user_id, starting_weight, current_weight, target_weight, daily_syn_allowance, healthy_extra_a_allowance, healthy_extra_b_allowance)
-      VALUES (?, ?, 0, 0, 0, 15, 1, 1)
-    `);
-    profileStmt.run(profileId, id);
+    await pool.query(
+      `INSERT INTO user_profiles (id, user_id, starting_weight, current_weight, target_weight, daily_syn_allowance, healthy_extra_a_allowance, healthy_extra_b_allowance)
+       VALUES ($1, $2, 0, 0, 0, 15, 1, 1)`,
+      [profileId, id]
+    );
 
     return this.findById(id)!;
   }
 
-  static findById(id: string): User | undefined {
-    const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
-    return stmt.get(id) as User | undefined;
+  static async findById(id: string): Promise<User | undefined> {
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    return result.rows[0] as User | undefined;
   }
 
-  static findByEmail(email: string): User | undefined {
-    const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
-    return stmt.get(email) as User | undefined;
+  static async findByEmail(email: string): Promise<User | undefined> {
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    return result.rows[0] as User | undefined;
   }
 
   static async verifyPassword(password: string, hash: string): Promise<boolean> {
     return bcrypt.compare(password, hash);
   }
 
-  static getProfile(userId: string): any | undefined {
-    const stmt = db.prepare('SELECT * FROM user_profiles WHERE user_id = ?');
-    const profile = stmt.get(userId) as UserProfile | undefined;
+  static async getProfile(userId: string): Promise<any | undefined> {
+    const result = await pool.query('SELECT * FROM user_profiles WHERE user_id = $1', [userId]);
+    const profile = result.rows[0] as UserProfile | undefined;
 
     if (!profile) return undefined;
 
@@ -80,7 +79,7 @@ export class UserModel {
     };
   }
 
-  static updateProfile(userId: string, data: any): UserProfile {
+  static async updateProfile(userId: string, data: any): Promise<UserProfile> {
     // Map camelCase to snake_case
     const fieldMap: Record<string, string> = {
       startingWeight: 'starting_weight',
@@ -94,18 +93,18 @@ export class UserModel {
 
     const fields = Object.keys(data)
       .filter(key => fieldMap[key])
-      .map(key => `${fieldMap[key]} = ?`)
+      .map((key, index) => `${fieldMap[key]} = $${index + 1}`)
       .join(', ');
 
     const values = Object.keys(data)
       .filter(key => fieldMap[key])
       .map(key => data[key]);
 
-    const stmt = db.prepare(`
-      UPDATE user_profiles SET ${fields} WHERE user_id = ?
-    `);
+    await pool.query(
+      `UPDATE user_profiles SET ${fields} WHERE user_id = $${values.length + 1}`,
+      [...values, userId]
+    );
 
-    stmt.run(...values, userId);
     return this.getProfile(userId)!;
   }
 }

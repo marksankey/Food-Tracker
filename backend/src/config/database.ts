@@ -1,139 +1,150 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
+import pg from 'pg';
+import { v4 as uuidv4 } from 'uuid';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const { Pool } = pg;
 
-const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '../../database/food-tracker.db');
+// Database connection pool
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+});
 
-// Ensure the database directory exists
-const dbDir = path.dirname(dbPath);
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
-}
+// Test the connection
+pool.on('connect', () => {
+  console.log('✅ Connected to PostgreSQL database');
+});
 
-export const db: Database.Database = new Database(dbPath);
+pool.on('error', (err) => {
+  console.error('❌ Unexpected error on idle client', err);
+  process.exit(-1);
+});
 
-// Enable foreign keys
-db.pragma('foreign_keys = ON');
+export const initializeDatabase = async () => {
+  const client = await pool.connect();
 
-export const initializeDatabase = () => {
-  // Users table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      name TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+  try {
+    // Users table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        name TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-  // User Profiles table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS user_profiles (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL UNIQUE,
-      starting_weight REAL NOT NULL DEFAULT 0,
-      current_weight REAL NOT NULL DEFAULT 0,
-      target_weight REAL NOT NULL DEFAULT 0,
-      height REAL,
-      daily_syn_allowance INTEGER NOT NULL DEFAULT 15,
-      healthy_extra_a_allowance INTEGER NOT NULL DEFAULT 1,
-      healthy_extra_b_allowance INTEGER NOT NULL DEFAULT 1,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `);
+    // User Profiles table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_profiles (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        starting_weight REAL NOT NULL DEFAULT 0,
+        current_weight REAL NOT NULL DEFAULT 0,
+        target_weight REAL NOT NULL DEFAULT 0,
+        height REAL,
+        daily_syn_allowance INTEGER NOT NULL DEFAULT 15,
+        healthy_extra_a_allowance INTEGER NOT NULL DEFAULT 1,
+        healthy_extra_b_allowance INTEGER NOT NULL DEFAULT 1,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
 
-  // Foods table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS foods (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      syn_value REAL NOT NULL DEFAULT 0,
-      is_free_food INTEGER NOT NULL DEFAULT 0,
-      is_speed_food INTEGER NOT NULL DEFAULT 0,
-      healthy_extra_type TEXT,
-      portion_size REAL NOT NULL DEFAULT 100,
-      portion_unit TEXT NOT NULL DEFAULT 'g',
-      category TEXT NOT NULL DEFAULT 'general',
-      created_by TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
-    )
-  `);
+    // Foods table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS foods (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        syn_value REAL NOT NULL DEFAULT 0,
+        is_free_food INTEGER NOT NULL DEFAULT 0,
+        is_speed_food INTEGER NOT NULL DEFAULT 0,
+        healthy_extra_type TEXT,
+        portion_size REAL NOT NULL DEFAULT 100,
+        portion_unit TEXT NOT NULL DEFAULT 'g',
+        category TEXT NOT NULL DEFAULT 'general',
+        created_by TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+      )
+    `);
 
-  // Food Diary Entries table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS food_diary (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      date TEXT NOT NULL,
-      meal_type TEXT NOT NULL,
-      food_id TEXT NOT NULL,
-      quantity REAL NOT NULL DEFAULT 1,
-      syn_value_consumed REAL NOT NULL DEFAULT 0,
-      is_healthy_extra INTEGER NOT NULL DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE
-    )
-  `);
+    // Food Diary Entries table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS food_diary (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        date TEXT NOT NULL,
+        meal_type TEXT NOT NULL,
+        food_id TEXT NOT NULL,
+        quantity REAL NOT NULL DEFAULT 1,
+        syn_value_consumed REAL NOT NULL DEFAULT 0,
+        is_healthy_extra INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE
+      )
+    `);
 
-  // Weight Logs table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS weight_logs (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      date TEXT NOT NULL,
-      weight REAL NOT NULL,
-      notes TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `);
+    // Weight Logs table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS weight_logs (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        date TEXT NOT NULL,
+        weight REAL NOT NULL,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
 
-  // Create indexes for better query performance
-  db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_food_diary_user_date ON food_diary(user_id, date);
-    CREATE INDEX IF NOT EXISTS idx_weight_logs_user ON weight_logs(user_id);
-    CREATE INDEX IF NOT EXISTS idx_foods_name ON foods(name);
-  `);
+    // Create indexes for better query performance
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_food_diary_user_date ON food_diary(user_id, date)
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_weight_logs_user ON weight_logs(user_id)
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_foods_name ON foods(name)
+    `);
 
-  console.log('Database initialized successfully');
+    console.log('✅ Database schema initialized successfully');
 
-  // Auto-seed if database is empty
-  const foodCount = db.prepare('SELECT COUNT(*) as count FROM foods').get() as { count: number };
-  if (foodCount.count === 0) {
-    console.log('Database is empty, seeding with initial foods...');
-    seedDatabase();
-  }
+    // Auto-seed if database is empty
+    const foodCountResult = await client.query('SELECT COUNT(*) as count FROM foods');
+    const foodCount = parseInt(foodCountResult.rows[0].count);
 
-  // Create default user for personal app (no authentication)
-  const defaultUserId = 'default-user';
-  const existingUser = db.prepare('SELECT * FROM users WHERE id = ?').get(defaultUserId);
-  if (!existingUser) {
-    console.log('Creating default user for personal app...');
-    db.prepare('INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)').run(
-      defaultUserId,
-      'default@local',
-      'not-needed',
-      'My Food Tracker'
-    );
-    db.prepare('INSERT INTO user_profiles (id, user_id, starting_weight, current_weight, target_weight, daily_syn_allowance, healthy_extra_a_allowance, healthy_extra_b_allowance) VALUES (?, ?, 0, 0, 0, 15, 1, 1)').run(
-      uuidv4(),
-      defaultUserId
-    );
+    if (foodCount === 0) {
+      console.log('Database is empty, seeding with initial foods...');
+      await seedDatabase(client);
+    }
+
+    // Create default user for personal app (no authentication)
+    const defaultUserId = 'default-user';
+    const existingUserResult = await client.query('SELECT * FROM users WHERE id = $1', [defaultUserId]);
+
+    if (existingUserResult.rows.length === 0) {
+      console.log('Creating default user for personal app...');
+      await client.query(
+        'INSERT INTO users (id, email, password_hash, name) VALUES ($1, $2, $3, $4)',
+        [defaultUserId, 'default@local', 'not-needed', 'My Food Tracker']
+      );
+      await client.query(
+        'INSERT INTO user_profiles (id, user_id, starting_weight, current_weight, target_weight, daily_syn_allowance, healthy_extra_a_allowance, healthy_extra_b_allowance) VALUES ($1, $2, 0, 0, 0, 15, 1, 1)',
+        [uuidv4(), defaultUserId]
+      );
+    }
+  } catch (error) {
+    console.error('❌ Error initializing database:', error);
+    throw error;
+  } finally {
+    client.release();
   }
 };
 
-// Import seedDatabase function inline to avoid circular dependencies
-import { v4 as uuidv4 } from 'uuid';
-
-const seedDatabase = () => {
+const seedDatabase = async (client: pg.PoolClient) => {
   const foods = [
     // Free Foods - Proteins
     { name: 'Chicken Breast (skinless)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
@@ -215,26 +226,25 @@ const seedDatabase = () => {
     { name: 'Diet Coke', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'drinks', portionSize: 330, portionUnit: 'ml' },
   ];
 
-  const stmt = db.prepare(`
-    INSERT INTO foods (id, name, syn_value, is_free_food, is_speed_food, healthy_extra_type, portion_size, portion_unit, category)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  foods.forEach(food => {
-    stmt.run(
-      uuidv4(),
-      food.name,
-      food.synValue,
-      food.isFreeFood ? 1 : 0,
-      food.isSpeedFood ? 1 : 0,
-      (food as any).healthyExtraType || null,
-      food.portionSize,
-      food.portionUnit,
-      food.category
+  for (const food of foods) {
+    await client.query(
+      `INSERT INTO foods (id, name, syn_value, is_free_food, is_speed_food, healthy_extra_type, portion_size, portion_unit, category)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        uuidv4(),
+        food.name,
+        food.synValue,
+        food.isFreeFood ? 1 : 0,
+        food.isSpeedFood ? 1 : 0,
+        (food as any).healthyExtraType || null,
+        food.portionSize,
+        food.portionUnit,
+        food.category
+      ]
     );
-  });
+  }
 
   console.log(`✅ Seeded ${foods.length} foods to the database`);
 };
 
-export default db;
+export default pool;
