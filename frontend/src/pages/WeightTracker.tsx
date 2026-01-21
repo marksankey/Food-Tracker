@@ -13,16 +13,34 @@ const WeightTracker = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [displayUnit, setDisplayUnit] = useState<'metric' | 'imperial'>('metric');
   const [inputUnit, setInputUnit] = useState<'metric' | 'imperial'>('metric');
+  const [stones, setStones] = useState<number>(0);
+  const [pounds, setPounds] = useState<number>(0);
 
   // Conversion helpers
-  const kgToLbs = (kg: number) => kg * 2.20462;
-  const lbsToKg = (lbs: number) => lbs / 2.20462;
+  const kgToStonesPounds = (kg: number) => {
+    const totalPounds = kg * 2.20462;
+    let stones = Math.floor(totalPounds / 14);
+    let pounds = Math.round(totalPounds % 14);
+
+    // Handle rollover: if pounds = 14, that's actually 1 more stone
+    if (pounds === 14) {
+      stones += 1;
+      pounds = 0;
+    }
+
+    return { stones, pounds };
+  };
+
+  const stonesToKg = (stones: number, pounds: number) => {
+    return ((stones * 14) + pounds) / 2.20462;
+  };
 
   const formatWeight = (kg: number) => {
     if (displayUnit === 'metric') {
       return `${kg.toFixed(1)} kg`;
     } else {
-      return `${kgToLbs(kg).toFixed(1)} lbs`;
+      const { stones, pounds } = kgToStonesPounds(kg);
+      return `${stones} st ${pounds} lb`;
     }
   };
 
@@ -42,14 +60,18 @@ const WeightTracker = () => {
   };
 
   const handleAddLog = async () => {
-    if (!weight || weight <= 0) return;
+    // Validate input based on unit system
+    if (inputUnit === 'metric' && (!weight || weight <= 0)) return;
+    if (inputUnit === 'imperial' && (stones === 0 && pounds === 0)) return;
 
     try {
-      // Convert to kg if imperial
-      const weightInKg = inputUnit === 'imperial' ? lbsToKg(weight) : weight;
+      // Convert to kg based on input unit
+      const weightInKg = inputUnit === 'imperial' ? stonesToKg(stones, pounds) : weight;
       await weightAPI.add({ date, weight: weightInKg, notes });
       setShowAddModal(false);
       setWeight(0);
+      setStones(0);
+      setPounds(0);
       setNotes('');
       setDate(format(new Date(), 'yyyy-MM-dd'));
       setInputUnit('metric'); // Reset to metric
@@ -113,7 +135,7 @@ const WeightTracker = () => {
               className={`unit-display-btn ${displayUnit === 'imperial' ? 'active' : ''}`}
               onClick={() => setDisplayUnit('imperial')}
             >
-              Imperial (lbs)
+              Imperial (st/lb)
             </button>
           </div>
 
@@ -128,7 +150,13 @@ const WeightTracker = () => {
               <h3>Last Change</h3>
               <p className={`stat-value ${weightChange && weightChange < 0 ? 'positive' : 'negative'}`}>
                 {weightChange !== null
-                  ? `${weightChange > 0 ? '+' : ''}${displayUnit === 'metric' ? weightChange.toFixed(1) + ' kg' : kgToLbs(weightChange).toFixed(1) + ' lbs'}`
+                  ? displayUnit === 'metric'
+                    ? `${weightChange > 0 ? '+' : ''}${weightChange.toFixed(1)} kg`
+                    : (() => {
+                        const { stones, pounds } = kgToStonesPounds(Math.abs(weightChange));
+                        const sign = weightChange > 0 ? '+' : '-';
+                        return `${sign}${stones} st ${pounds} lb`;
+                      })()
                   : 'No data'}
               </p>
             </div>
@@ -136,7 +164,12 @@ const WeightTracker = () => {
               <h3>Total Loss</h3>
               <p className={`stat-value ${totalLoss && totalLoss > 0 ? 'positive' : 'negative'}`}>
                 {totalLoss !== null
-                  ? `${displayUnit === 'metric' ? totalLoss.toFixed(1) + ' kg' : kgToLbs(totalLoss).toFixed(1) + ' lbs'}`
+                  ? displayUnit === 'metric'
+                    ? `${totalLoss.toFixed(1)} kg`
+                    : (() => {
+                        const { stones, pounds } = kgToStonesPounds(totalLoss);
+                        return `${stones} st ${pounds} lb`;
+                      })()
                   : 'No data'}
               </p>
             </div>
@@ -167,7 +200,13 @@ const WeightTracker = () => {
                           <td>{formatWeight(log.weight)}</td>
                           <td className={change && change < 0 ? 'positive' : 'negative'}>
                             {change !== null
-                              ? `${change > 0 ? '+' : ''}${displayUnit === 'metric' ? change.toFixed(1) + ' kg' : kgToLbs(change).toFixed(1) + ' lbs'}`
+                              ? displayUnit === 'metric'
+                                ? `${change > 0 ? '+' : ''}${change.toFixed(1)} kg`
+                                : (() => {
+                                    const { stones, pounds } = kgToStonesPounds(Math.abs(change));
+                                    const sign = change > 0 ? '+' : '-';
+                                    return `${sign}${stones} st ${pounds} lb`;
+                                  })()
                               : '-'}
                           </td>
                           <td>{log.notes || '-'}</td>
@@ -216,20 +255,47 @@ const WeightTracker = () => {
                   className={`unit-btn ${inputUnit === 'imperial' ? 'active' : ''}`}
                   onClick={() => setInputUnit('imperial')}
                 >
-                  lbs
+                  st/lb
                 </button>
               </div>
             </div>
-            <div className="form-group">
-              <label>Weight ({inputUnit === 'metric' ? 'kg' : 'lbs'})</label>
-              <input
-                type="number"
-                step="0.1"
-                value={weight || ''}
-                onChange={(e) => setWeight(parseFloat(e.target.value))}
-                placeholder="Enter weight"
-              />
-            </div>
+            {inputUnit === 'metric' ? (
+              <div className="form-group">
+                <label>Weight (kg)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={weight || ''}
+                  onChange={(e) => setWeight(parseFloat(e.target.value))}
+                  placeholder="Enter weight"
+                />
+              </div>
+            ) : (
+              <div className="form-group">
+                <label>Weight</label>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    min="0"
+                    value={stones || ''}
+                    onChange={(e) => setStones(parseInt(e.target.value) || 0)}
+                    placeholder="St"
+                    style={{ flex: 1 }}
+                  />
+                  <span>st</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="13"
+                    value={pounds || ''}
+                    onChange={(e) => setPounds(parseInt(e.target.value) || 0)}
+                    placeholder="Lb"
+                    style={{ flex: 1 }}
+                  />
+                  <span>lb</span>
+                </div>
+              </div>
+            )}
             <div className="form-group">
               <label>Notes (optional)</label>
               <textarea
@@ -243,7 +309,11 @@ const WeightTracker = () => {
               <button onClick={() => setShowAddModal(false)} className="btn btn-secondary">
                 Cancel
               </button>
-              <button onClick={handleAddLog} className="btn btn-primary" disabled={!weight || weight <= 0}>
+              <button
+                onClick={handleAddLog}
+                className="btn btn-primary"
+                disabled={inputUnit === 'metric' ? (!weight || weight <= 0) : (stones === 0 && pounds === 0)}
+              >
                 Add Entry
               </button>
             </div>
