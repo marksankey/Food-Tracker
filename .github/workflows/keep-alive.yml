@@ -1,0 +1,72 @@
+name: Keep Apps Alive
+
+# Runs every 10 minutes to prevent Render backend from spinning down
+on:
+  schedule:
+    # Runs every 10 minutes (*/10 means every 10 minutes)
+    # GitHub Actions uses UTC time
+    - cron: '*/10 * * * *'
+
+  # Allow manual triggering from Actions tab
+  workflow_dispatch:
+
+jobs:
+  ping-health-endpoints:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Render Backend
+        run: |
+          echo "Pinging Render backend health endpoint..."
+
+          # Replace this URL with your actual Render backend URL
+          # Example: https://food-tracker-backend-xxxx.onrender.com/api/health
+          BACKEND_URL="${{ secrets.BACKEND_URL }}"
+
+          if [ -z "$BACKEND_URL" ]; then
+            echo "⚠️  BACKEND_URL secret not set. Please add it in GitHub repository settings."
+            echo "   Go to: Settings > Secrets and variables > Actions > New repository secret"
+            echo "   Name: BACKEND_URL"
+            echo "   Value: https://your-backend.onrender.com/api/health"
+            exit 1
+          fi
+
+          # Ping the backend
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$BACKEND_URL")
+
+          if [ "$response" -eq 200 ]; then
+            echo "✅ Backend is alive! (HTTP $response)"
+          else
+            echo "❌ Backend returned HTTP $response"
+            exit 1
+          fi
+
+      - name: Ping Vercel Frontend (Optional)
+        run: |
+          echo "Pinging Vercel frontend..."
+
+          # Optional: Add your Vercel frontend URL
+          # This ensures the frontend stays warm too
+          FRONTEND_URL="${{ secrets.FRONTEND_URL }}"
+
+          if [ -z "$FRONTEND_URL" ]; then
+            echo "ℹ️  FRONTEND_URL secret not set (optional)."
+            echo "   Vercel doesn't spin down, but you can add this for monitoring."
+            exit 0
+          fi
+
+          # Ping the frontend
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$FRONTEND_URL")
+
+          if [ "$response" -eq 200 ]; then
+            echo "✅ Frontend is alive! (HTTP $response)"
+          else
+            echo "⚠️  Frontend returned HTTP $response"
+          fi
+
+      - name: Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Keep-alive ping completed at $(date -u)"
+          echo "Next ping in ~10 minutes"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
