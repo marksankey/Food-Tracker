@@ -11,6 +11,20 @@ const WeightTracker = () => {
   const [weight, setWeight] = useState<number>(0);
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [displayUnit, setDisplayUnit] = useState<'metric' | 'imperial'>('metric');
+  const [inputUnit, setInputUnit] = useState<'metric' | 'imperial'>('metric');
+
+  // Conversion helpers
+  const kgToLbs = (kg: number) => kg * 2.20462;
+  const lbsToKg = (lbs: number) => lbs / 2.20462;
+
+  const formatWeight = (kg: number) => {
+    if (displayUnit === 'metric') {
+      return `${kg.toFixed(1)} kg`;
+    } else {
+      return `${kgToLbs(kg).toFixed(1)} lbs`;
+    }
+  };
 
   useEffect(() => {
     loadWeightLogs();
@@ -31,11 +45,14 @@ const WeightTracker = () => {
     if (!weight || weight <= 0) return;
 
     try {
-      await weightAPI.add({ date, weight, notes });
+      // Convert to kg if imperial
+      const weightInKg = inputUnit === 'imperial' ? lbsToKg(weight) : weight;
+      await weightAPI.add({ date, weight: weightInKg, notes });
       setShowAddModal(false);
       setWeight(0);
       setNotes('');
       setDate(format(new Date(), 'yyyy-MM-dd'));
+      setInputUnit('metric'); // Reset to metric
       loadWeightLogs();
     } catch (error) {
       console.error('Failed to add weight log:', error);
@@ -83,25 +100,44 @@ const WeightTracker = () => {
         <p>Loading...</p>
       ) : (
         <>
+          <div className="unit-display-toggle">
+            <button
+              type="button"
+              className={`unit-display-btn ${displayUnit === 'metric' ? 'active' : ''}`}
+              onClick={() => setDisplayUnit('metric')}
+            >
+              Metric (kg)
+            </button>
+            <button
+              type="button"
+              className={`unit-display-btn ${displayUnit === 'imperial' ? 'active' : ''}`}
+              onClick={() => setDisplayUnit('imperial')}
+            >
+              Imperial (lbs)
+            </button>
+          </div>
+
           <div className="weight-stats">
             <div className="card stat-card">
               <h3>Current Weight</h3>
               <p className="stat-value">
-                {weightLogs.length > 0 ? `${weightLogs[0].weight} kg` : 'No data'}
+                {weightLogs.length > 0 ? formatWeight(weightLogs[0].weight) : 'No data'}
               </p>
             </div>
             <div className="card stat-card">
               <h3>Last Change</h3>
               <p className={`stat-value ${weightChange && weightChange < 0 ? 'positive' : 'negative'}`}>
                 {weightChange !== null
-                  ? `${weightChange > 0 ? '+' : ''}${weightChange.toFixed(1)} kg`
+                  ? `${weightChange > 0 ? '+' : ''}${displayUnit === 'metric' ? weightChange.toFixed(1) + ' kg' : kgToLbs(weightChange).toFixed(1) + ' lbs'}`
                   : 'No data'}
               </p>
             </div>
             <div className="card stat-card">
               <h3>Total Loss</h3>
               <p className={`stat-value ${totalLoss && totalLoss > 0 ? 'positive' : 'negative'}`}>
-                {totalLoss !== null ? `${totalLoss.toFixed(1)} kg` : 'No data'}
+                {totalLoss !== null
+                  ? `${displayUnit === 'metric' ? totalLoss.toFixed(1) + ' kg' : kgToLbs(totalLoss).toFixed(1) + ' lbs'}`
+                  : 'No data'}
               </p>
             </div>
           </div>
@@ -128,9 +164,11 @@ const WeightTracker = () => {
                       return (
                         <tr key={log.id}>
                           <td>{format(new Date(log.date), 'MMM d, yyyy')}</td>
-                          <td>{log.weight} kg</td>
+                          <td>{formatWeight(log.weight)}</td>
                           <td className={change && change < 0 ? 'positive' : 'negative'}>
-                            {change !== null ? `${change > 0 ? '+' : ''}${change.toFixed(1)} kg` : '-'}
+                            {change !== null
+                              ? `${change > 0 ? '+' : ''}${displayUnit === 'metric' ? change.toFixed(1) + ' kg' : kgToLbs(change).toFixed(1) + ' lbs'}`
+                              : '-'}
                           </td>
                           <td>{log.notes || '-'}</td>
                           <td>
@@ -164,7 +202,26 @@ const WeightTracker = () => {
               />
             </div>
             <div className="form-group">
-              <label>Weight (kg)</label>
+              <label>Unit</label>
+              <div className="unit-toggle-inline">
+                <button
+                  type="button"
+                  className={`unit-btn ${inputUnit === 'metric' ? 'active' : ''}`}
+                  onClick={() => setInputUnit('metric')}
+                >
+                  kg
+                </button>
+                <button
+                  type="button"
+                  className={`unit-btn ${inputUnit === 'imperial' ? 'active' : ''}`}
+                  onClick={() => setInputUnit('imperial')}
+                >
+                  lbs
+                </button>
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Weight ({inputUnit === 'metric' ? 'kg' : 'lbs'})</label>
               <input
                 type="number"
                 step="0.1"
