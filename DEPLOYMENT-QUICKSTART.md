@@ -76,7 +76,26 @@ vercel --prod
 
 ---
 
-### 🔔 UptimeRobot - 2 minutes
+### 🤖 Keep Backend Alive - 2 minutes
+
+**Option A: GitHub Actions (Recommended)**
+
+```bash
+# 1. Add secret to GitHub repo
+# Settings > Secrets and variables > Actions > New repository secret
+# Name: BACKEND_URL
+# Value: https://your-backend.onrender.com/api/health
+
+# 2. Push workflow (if not already done)
+git add .github/
+git commit -m "Add keep-alive workflow"
+git push
+
+# 3. Verify in Actions tab
+# Done! ✅ Automated keep-alive every 10 minutes
+```
+
+**Option B: UptimeRobot (Manual)**
 
 1. Go to https://uptimerobot.com → Sign up
 2. **Add New Monitor**:
@@ -105,7 +124,7 @@ vercel --prod
 Your app is now:
 - ✅ Deployed on Render (backend)
 - ✅ Deployed on Vercel (frontend)
-- ✅ Staying warm with UptimeRobot
+- ✅ Staying warm with GitHub Actions or UptimeRobot
 - ✅ On your iPhone home screen
 
 **Total time**: ~10 minutes

@@ -202,17 +202,60 @@ After deployment, Vercel will show:
 
 ---
 
-## Part 3: UptimeRobot Setup (Keep Backend Alive)
+## Part 3: Keep Backend Alive (Prevent Spin-Down)
 
-This prevents Render from spinning down your backend after 15 minutes of inactivity.
+Render's free tier spins down your backend after 15 minutes of inactivity. Choose one of these solutions:
 
-### Step 1: Create UptimeRobot Account
+### Option A: GitHub Actions (Recommended) 🤖
+
+**Fully automated, no external services needed!**
+
+This workflow runs on GitHub's servers and pings your backend every 10 minutes.
+
+#### Step 1: Add GitHub Secrets
+
+1. Go to your repository: https://github.com/marksankey/Food-Tracker
+2. Click **Settings** > **Secrets and variables** > **Actions**
+3. Click **New repository secret**
+4. Add:
+   - **Name**: `BACKEND_URL`
+   - **Value**: `https://your-backend.onrender.com/api/health`
+5. Click **Add secret**
+
+#### Step 2: Push Workflow (If Not Already Done)
+
+The workflow file already exists in `.github/workflows/keep-alive.yml`. Just push it:
+
+```bash
+git add .github/
+git commit -m "Add keep-alive workflow"
+git push
+```
+
+#### Step 3: Verify
+
+1. Go to your repository > **Actions** tab
+2. Find "Keep Apps Alive" workflow
+3. Click **Run workflow** to test immediately
+4. Check the logs - should see ✅ success
+
+**Done!** GitHub will now ping your backend every 10 minutes automatically. 24/7. Forever. For free. 🎉
+
+📖 **Detailed guide**: See `.github/workflows/README.md` for full documentation.
+
+---
+
+### Option B: UptimeRobot (Manual Alternative)
+
+If you prefer a dedicated monitoring service:
+
+#### Step 1: Create UptimeRobot Account
 
 1. Go to https://uptimerobot.com
 2. Click "Sign Up Free"
 3. Create account (100% free, no credit card needed)
 
-### Step 2: Add Monitor
+#### Step 2: Add Monitor
 
 1. Click "Add New Monitor"
 2. Configure:
@@ -224,11 +267,19 @@ This prevents Render from spinning down your backend after 15 minutes of inactiv
    ```
 3. Click "Create Monitor"
 
-### Step 3: Verify
+#### Step 3: Verify
 
 - UptimeRobot will ping your backend every 5 minutes
 - This keeps Render awake and responsive
 - Your app will now load instantly! ⚡
+
+---
+
+**Which option to choose?**
+- ✅ **GitHub Actions**: Automated, lives in your code, no external dependencies
+- ✅ **UptimeRobot**: Separate monitoring dashboard, email alerts available
+
+Both work great! We recommend GitHub Actions for simplicity.
 
 ---
 
@@ -270,7 +321,13 @@ This prevents Render from spinning down your backend after 15 minutes of inactiv
 - [ ] Registration/login works
 - [ ] Can add foods to diary
 
-### UptimeRobot
+### Keep-Alive (Choose One)
+**Option A: GitHub Actions (Recommended)**
+- [ ] Added `BACKEND_URL` secret to GitHub repository
+- [ ] Pushed workflow to GitHub
+- [ ] Verified workflow runs in Actions tab
+
+**Option B: UptimeRobot**
 - [ ] Account created
 - [ ] Monitor added for backend health check
 - [ ] Set to check every 5 minutes
