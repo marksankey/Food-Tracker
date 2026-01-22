@@ -209,7 +209,7 @@ export const saveProduct = async (req: AuthRequest, res: Response) => {
     const match = servingSize?.match(/\((\d+\.?\d*)\s*g\)|(\d+\.?\d*)\s*g/);
     const portionSize = match ? parseFloat(match[1] || match[2]) : (parseFloat(servingSize) || 100);
 
-    const food = FoodModel.create({
+    const food = await FoodModel.create({
       name,
       syn_value: synValue || 0,
       is_free_food: isFree ? 1 : 0,

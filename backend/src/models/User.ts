@@ -42,7 +42,9 @@ export class UserModel {
       [profileId, id]
     );
 
-    return this.findById(id)!;
+    const user = await this.findById(id);
+    if (!user) throw new Error('Failed to create user');
+    return user;
   }
 
   static async findById(id: string): Promise<User | undefined> {
@@ -79,7 +81,7 @@ export class UserModel {
     };
   }
 
-  static async updateProfile(userId: string, data: any): Promise<UserProfile> {
+  static async updateProfile(userId: string, data: any): Promise<any> {
     // Map camelCase to snake_case
     const fieldMap: Record<string, string> = {
       startingWeight: 'starting_weight',
@@ -105,6 +107,6 @@ export class UserModel {
       [...values, userId]
     );
 
-    return this.getProfile(userId)!;
+    return await this.getProfile(userId);
   }
 }

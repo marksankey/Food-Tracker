@@ -30,7 +30,7 @@ export class WeightModel {
       [id, userId, data.date, data.weight, data.notes || null]
     );
 
-    return this.findById(id)!;
+    return await this.findById(id);
   }
 
   static async findById(id: string): Promise<any | undefined> {

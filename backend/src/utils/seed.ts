@@ -1,7 +1,7 @@
-import { db, initializeDatabase } from '../config/database.js';
+import { pool, initializeDatabase } from '../config/database.js';
 import { v4 as uuidv4 } from 'uuid';
 
-const seedFoods = () => {
+const seedFoods = async () => {
   const foods = [
     // Free Foods - Proteins
     { name: 'Chicken Breast (skinless)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
@@ -83,29 +83,31 @@ const seedFoods = () => {
     { name: 'Diet Coke', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'drinks', portionSize: 330, portionUnit: 'ml' },
   ];
 
-  const stmt = db.prepare(`
-    INSERT INTO foods (id, name, syn_value, is_free_food, is_speed_food, healthy_extra_type, portion_size, portion_unit, category)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  foods.forEach(food => {
-    stmt.run(
-      uuidv4(),
-      food.name,
-      food.synValue,
-      food.isFreeFood ? 1 : 0,
-      food.isSpeedFood ? 1 : 0,
-      food.healthyExtraType || null,
-      food.portionSize,
-      food.portionUnit,
-      food.category
+  for (const food of foods) {
+    await pool.query(
+      `INSERT INTO foods (id, name, syn_value, is_free_food, is_speed_food, healthy_extra_type, portion_size, portion_unit, category)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        uuidv4(),
+        food.name,
+        food.synValue,
+        food.isFreeFood ? 1 : 0,
+        food.isSpeedFood ? 1 : 0,
+        (food as any).healthyExtraType || null,
+        food.portionSize,
+        food.portionUnit,
+        food.category
+      ]
     );
-  });
+  }
 
   console.log(`✅ Seeded ${foods.length} foods to the database`);
 };
 
 // Run the seed
-initializeDatabase();
-seedFoods();
-console.log('🌱 Database seeding completed!');
+(async () => {
+  await initializeDatabase();
+  await seedFoods();
+  console.log('🌱 Database seeding completed!');
+  process.exit(0);
+})();

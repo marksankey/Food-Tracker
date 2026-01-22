@@ -4,7 +4,7 @@ import { AuthRequest } from '../middleware/noauth.js';
 
 export const getWeightLogs = async (req: AuthRequest, res: Response) => {
   try {
-    const logs = WeightModel.findByUser(req.userId!);
+    const logs = await WeightModel.findByUser(req.userId!);
     res.json(logs);
   } catch (error) {
     console.error('Get weight logs error:', error);
@@ -14,7 +14,7 @@ export const getWeightLogs = async (req: AuthRequest, res: Response) => {
 
 export const createWeightLog = async (req: AuthRequest, res: Response) => {
   try {
-    const log = WeightModel.create(req.userId!, req.body);
+    const log = await WeightModel.create(req.userId!, req.body);
     res.status(201).json(log);
   } catch (error) {
     console.error('Create weight log error:', error);
@@ -24,7 +24,7 @@ export const createWeightLog = async (req: AuthRequest, res: Response) => {
 
 export const updateWeightLog = async (req: AuthRequest, res: Response) => {
   try {
-    const log = WeightModel.update(req.params.id, req.userId!, req.body);
+    const log = await WeightModel.update(req.params.id, req.userId!, req.body);
     if (!log) {
       return res.status(404).json({ message: 'Weight log not found' });
     }
@@ -37,7 +37,7 @@ export const updateWeightLog = async (req: AuthRequest, res: Response) => {
 
 export const deleteWeightLog = async (req: AuthRequest, res: Response) => {
   try {
-    const deleted = WeightModel.delete(req.params.id, req.userId!);
+    const deleted = await WeightModel.delete(req.params.id, req.userId!);
     if (!deleted) {
       return res.status(404).json({ message: 'Weight log not found' });
     }

@@ -10,7 +10,7 @@ export const getDiaryEntries = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: 'Date is required' });
     }
 
-    const entries = DiaryModel.findByUserAndDate(req.userId!, date);
+    const entries = await DiaryModel.findByUserAndDate(req.userId!, date);
     res.json(entries);
   } catch (error) {
     console.error('Get diary entries error:', error);
@@ -25,8 +25,8 @@ export const getDailySummary = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: 'Date is required' });
     }
 
-    const summary = DiaryModel.getDailySummary(req.userId!, date);
-    const profile = UserModel.getProfile(req.userId!);
+    const summary = await DiaryModel.getDailySummary(req.userId!, date);
+    const profile = await UserModel.getProfile(req.userId!);
 
     res.json({
       ...summary,
@@ -50,7 +50,7 @@ export const createDiaryEntry = async (req: AuthRequest, res: Response) => {
       is_healthy_extra: req.body.isHealthyExtra ? 1 : 0
     };
 
-    const entry = DiaryModel.create(req.userId!, entryData);
+    const entry = await DiaryModel.create(req.userId!, entryData);
     res.status(201).json(entry);
   } catch (error) {
     console.error('Create diary entry error:', error);
@@ -60,7 +60,7 @@ export const createDiaryEntry = async (req: AuthRequest, res: Response) => {
 
 export const updateDiaryEntry = async (req: AuthRequest, res: Response) => {
   try {
-    const entry = DiaryModel.update(req.params.id, req.userId!, req.body);
+    const entry = await DiaryModel.update(req.params.id, req.userId!, req.body);
     if (!entry) {
       return res.status(404).json({ message: 'Entry not found' });
     }
@@ -73,7 +73,7 @@ export const updateDiaryEntry = async (req: AuthRequest, res: Response) => {
 
 export const deleteDiaryEntry = async (req: AuthRequest, res: Response) => {
   try {
-    const deleted = DiaryModel.delete(req.params.id, req.userId!);
+    const deleted = await DiaryModel.delete(req.params.id, req.userId!);
     if (!deleted) {
       return res.status(404).json({ message: 'Entry not found' });
     }

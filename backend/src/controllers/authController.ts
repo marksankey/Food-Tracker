@@ -11,14 +11,14 @@ export const register = async (req: Request, res: Response) => {
     }
 
     // Check if user already exists
-    const existingUser = UserModel.findByEmail(email);
+    const existingUser = await UserModel.findByEmail(email);
     if (existingUser) {
       return res.status(400).json({ message: 'Email already registered' });
     }
 
     // Create user
     const user = await UserModel.create(email, password, name);
-    const profile = UserModel.getProfile(user.id);
+    const profile = await UserModel.getProfile(user.id);
 
     // Generate token
     const token = generateToken(user.id);
@@ -47,7 +47,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Find user
-    const user = UserModel.findByEmail(email);
+    const user = await UserModel.findByEmail(email);
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -58,7 +58,7 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const profile = UserModel.getProfile(user.id);
+    const profile = await UserModel.getProfile(user.id);
 
     // Generate token
     const token = generateToken(user.id);
@@ -80,12 +80,12 @@ export const login = async (req: Request, res: Response) => {
 
 export const getProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const user = UserModel.findById(req.userId!);
+    const user = await UserModel.findById(req.userId!);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const profile = UserModel.getProfile(user.id);
+    const profile = await UserModel.getProfile(user.id);
 
     res.json({
       user: {
@@ -103,7 +103,7 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
 
 export const updateProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const profile = UserModel.updateProfile(req.userId!, req.body);
+    const profile = await UserModel.updateProfile(req.userId!, req.body);
     res.json(profile);
   } catch (error) {
     console.error('Update profile error:', error);
