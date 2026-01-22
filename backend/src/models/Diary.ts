@@ -37,7 +37,9 @@ export class DiaryModel {
       ]
     );
 
-    return this.findById(id)!;
+    const entry = await this.findById(id);
+    if (!entry) throw new Error('Failed to create diary entry');
+    return entry;
   }
 
   static async findById(id: string): Promise<DiaryEntry | undefined> {

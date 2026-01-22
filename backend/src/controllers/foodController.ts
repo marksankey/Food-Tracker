@@ -22,7 +22,7 @@ export const getFoods = async (req: AuthRequest, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 100;
     const offset = parseInt(req.query.offset as string) || 0;
 
-    const foods = FoodModel.findAll(limit, offset);
+    const foods = await FoodModel.findAll(limit, offset);
     const transformedFoods = foods.map(transformFoodForFrontend);
     res.json(transformedFoods);
   } catch (error) {
@@ -40,7 +40,7 @@ export const searchFoods = async (req: AuthRequest, res: Response) => {
       is_speed_food: req.query.isSpeedFood === 'true' ? true : undefined
     };
 
-    const foods = FoodModel.search(query, filters);
+    const foods = await FoodModel.search(query, filters);
     const transformedFoods = foods.map(transformFoodForFrontend);
     res.json(transformedFoods);
   } catch (error) {
@@ -51,7 +51,7 @@ export const searchFoods = async (req: AuthRequest, res: Response) => {
 
 export const getFood = async (req: AuthRequest, res: Response) => {
   try {
-    const food = FoodModel.findById(req.params.id);
+    const food = await FoodModel.findById(req.params.id);
     if (!food) {
       return res.status(404).json({ message: 'Food not found' });
     }
@@ -64,7 +64,7 @@ export const getFood = async (req: AuthRequest, res: Response) => {
 
 export const createFood = async (req: AuthRequest, res: Response) => {
   try {
-    const food = FoodModel.create(req.body, req.userId);
+    const food = await FoodModel.create(req.body, req.userId);
     res.status(201).json(transformFoodForFrontend(food));
   } catch (error) {
     console.error('Create food error:', error);
@@ -77,7 +77,7 @@ export const getRecentFoods = async (req: AuthRequest, res: Response) => {
     const days = parseInt(req.query.days as string) || 7;
     const limit = parseInt(req.query.limit as string) || 100;
 
-    const foods = FoodModel.findRecent(days, limit);
+    const foods = await FoodModel.findRecent(days, limit);
     const transformedFoods = foods.map(transformFoodForFrontend);
     res.json(transformedFoods);
   } catch (error) {
@@ -88,7 +88,7 @@ export const getRecentFoods = async (req: AuthRequest, res: Response) => {
 
 export const deleteFood = async (req: AuthRequest, res: Response) => {
   try {
-    const deleted = FoodModel.delete(req.params.id, req.userId);
+    const deleted = await FoodModel.delete(req.params.id, req.userId);
     if (!deleted) {
       return res.status(404).json({ message: 'Food not found or you do not have permission to delete it' });
     }

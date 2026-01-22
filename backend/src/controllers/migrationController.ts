@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { db } from '../config/database.js';
+import { pool } from '../config/database.js';
 
 interface FoodRecord {
   id: string;
@@ -13,13 +13,13 @@ interface FoodRecord {
 export const checkSynValues = async (req: Request, res: Response) => {
   try {
     // Get all products to check their current state
-    const stmt = db.prepare(`
+    const result = await pool.query(`
       SELECT id, name, syn_value, portion_size, portion_unit, category
       FROM foods
       ORDER BY name
     `);
 
-    const products = stmt.all() as FoodRecord[];
+    const products = result.rows as FoodRecord[];
 
     res.json({
       success: true,
@@ -49,14 +49,14 @@ export const fixSynValues = async (req: Request, res: Response) => {
 
     // Get all commercial products (from Open Food Facts)
     // Note: Removed syn_value > 0 check to also fix products with 0 values
-    const stmt = db.prepare(`
+    const result = await pool.query(`
       SELECT id, name, syn_value, portion_size, portion_unit, category
       FROM foods
       WHERE category = 'commercial'
       AND portion_size != 100
     `);
 
-    const products = stmt.all() as FoodRecord[];
+    const products = result.rows as FoodRecord[];
 
     console.log(`Found ${products.length} products that need fixing\n`);
 
@@ -69,24 +69,21 @@ export const fixSynValues = async (req: Request, res: Response) => {
       });
     }
 
-    const updateStmt = db.prepare(`
-      UPDATE foods
-      SET syn_value = ?
-      WHERE id = ?
-    `);
-
     let fixed = 0;
     let skipped = 0;
     const fixedProducts: any[] = [];
 
-    products.forEach(product => {
+    for (const product of products) {
       // Calculate the scaled syn value (from per-100g to per-serving)
       const scaledSynValue = product.syn_value * (product.portion_size / 100);
       const roundedSynValue = Math.round(scaledSynValue * 2) / 2;
 
       // Only update if the values are different (accounting for rounding)
       if (Math.abs(product.syn_value - scaledSynValue) > 0.01) {
-        updateStmt.run(roundedSynValue, product.id);
+        await pool.query(
+          `UPDATE foods SET syn_value = $1 WHERE id = $2`,
+          [roundedSynValue, product.id]
+        );
 
         fixedProducts.push({
           name: product.name,
@@ -103,7 +100,7 @@ export const fixSynValues = async (req: Request, res: Response) => {
       } else {
         skipped++;
       }
-    });
+    }
 
     console.log('\n' + '='.repeat(50));
     console.log(`✅ Migration complete!`);

@@ -36,7 +36,9 @@ export class FoodModel {
       ]
     );
 
-    return this.findById(id)!;
+    const food = await this.findById(id);
+    if (!food) throw new Error('Failed to create food');
+    return food;
   }
 
   static async findById(id: string): Promise<Food | undefined> {

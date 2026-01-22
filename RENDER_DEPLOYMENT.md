@@ -1,208 +1,417 @@
-# Deploying Food Tracker to Render with PostgreSQL
+# Deploying Food Tracker with Supabase PostgreSQL + Render
 
-This guide will help you deploy your Food Tracker application to Render with a persistent PostgreSQL database.
+This guide will help you deploy your Food Tracker application using **Supabase** for free PostgreSQL database (no expiration!) and **Render** for hosting the backend.
 
-## Why PostgreSQL?
+## Why This Setup?
 
-Previously, the app used SQLite which stores data in a file. On Render's free tier, files are ephemeral and get deleted when the server restarts, causing data loss. PostgreSQL solves this by storing data in a separate, persistent database service.
+- **Supabase PostgreSQL**: Free forever, 500MB storage, no 90-day expiration
+- **Render Backend**: Free hosting with auto-deploy from GitHub
+- **Vercel Frontend**: Free hosting with CDN and automatic deployments
 
 ## Prerequisites
 
 - GitHub account with your Food Tracker repository
-- Render account (free tier works!)
+- Supabase account (free)
+- Render account (free)
+- Vercel account (free)
 
-## Step 1: Create PostgreSQL Database on Render
+---
 
-1. **Go to Render Dashboard**
-   - Visit https://dashboard.render.com/
-   - Log in to your account
+## Step 1: Create Free PostgreSQL Database on Supabase
 
-2. **Create New PostgreSQL Database**
-   - Click the **"New +"** button in the top right
-   - Select **"PostgreSQL"**
+### 1.1 Sign Up for Supabase
 
-3. **Configure Database**
-   - **Name**: `food-tracker-db` (or any name you prefer)
-   - **Database**: `food_tracker` (database name)
-   - **User**: Leave default (will be auto-generated)
-   - **Region**: Choose closest to you (e.g., Oregon (US West))
-   - **PostgreSQL Version**: 16 (or latest)
-   - **Datadog API Key**: Leave blank
-   - **Plan**: Select **"Free"** plan
+1. Go to [supabase.com](https://supabase.com)
+2. Click **"Start your project"**
+3. Sign up with GitHub (recommended) or email
 
-4. **Create Database**
-   - Click **"Create Database"**
-   - Wait 2-3 minutes for database to provision
-   - You'll see it appear in your dashboard
+### 1.2 Create New Project
 
-5. **Get Connection String**
-   - Click on your newly created database
-   - Scroll down to **"Connections"** section
-   - Look for **"Internal Database URL"** (this is important!)
-   - Click the copy icon to copy the connection string
-   - It will look like: `postgresql://food_tracker_db_user:xxxxx@dpg-xxxxx/food_tracker_db`
-   - **Keep this safe!** You'll need it in Step 3
+1. Click **"New Project"**
+2. Fill in the details:
+   - **Name**: `food-tracker-db` (or any name)
+   - **Database Password**: Create a strong password (save this!)
+   - **Region**: Choose closest to you (e.g., `us-west-1`)
+   - **Pricing Plan**: **Free** (includes 500MB database, no expiration)
+3. Click **"Create new project"**
+4. Wait 2-3 minutes for the database to provision
+
+### 1.3 Get Database Connection String
+
+1. Once your project is ready, go to **Project Settings** (gear icon in sidebar)
+2. Click **"Database"** in the left menu
+3. Scroll down to **"Connection string"** section
+4. Select **"URI"** tab (not Transaction or Session)
+5. Copy the connection string - it looks like:
+   ```
+   postgresql://postgres:[YOUR-PASSWORD]@db.xxx.supabase.co:5432/postgres
+   ```
+6. **IMPORTANT**: Replace `[YOUR-PASSWORD]` with the password you created in step 1.2
+7. **Save this connection string** - you'll need it in Step 2
+
+**Example connection string:**
+```
+postgresql://postgres:MySecurePassword123@db.abcdefghijklmnop.supabase.co:5432/postgres
+```
+
+---
 
 ## Step 2: Deploy Backend to Render
 
-1. **Create New Web Service**
-   - Go back to Render Dashboard
-   - Click **"New +"** → **"Web Service"**
+### 2.1 Create New Web Service
 
-2. **Connect Repository**
-   - Click **"Connect a repository"**
-   - If you haven't connected GitHub yet, authorize Render to access your repositories
-   - Find and select your `Food-Tracker` repository
-   - Click **"Connect"**
+1. Go to [dashboard.render.com](https://dashboard.render.com/)
+2. Log in or sign up (use GitHub for easy setup)
+3. Click **"New +"** → **"Web Service"**
 
-3. **Configure Web Service**
-   Fill in the following settings:
+### 2.2 Connect Repository
 
-   - **Name**: `food-tracker-backend` (or any name)
-   - **Region**: Same as database (e.g., Oregon US West)
-   - **Branch**: `main` (or your primary branch)
-   - **Root Directory**: `backend`
-   - **Runtime**: `Node`
-   - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm start`
-   - **Plan**: Select **"Free"**
+1. Click **"Connect a repository"**
+2. If needed, authorize Render to access your GitHub
+3. Find and select your `Food-Tracker` repository
+4. Click **"Connect"**
 
-4. **Add Environment Variables**
-   Scroll down to **"Environment Variables"** section and add these:
+### 2.3 Configure Web Service
 
-   | Key | Value |
-   |-----|-------|
-   | `NODE_ENV` | `production` |
-   | `PORT` | `5000` |
-   | `JWT_SECRET` | `your-secret-key-here` (generate a random string) |
-   | `DATABASE_URL` | Paste the **Internal Database URL** from Step 1 |
+Fill in the following settings:
 
-   **Important**: Use the **Internal Database URL**, not the External URL. Internal connections are free and faster.
+| Setting | Value |
+|---------|-------|
+| **Name** | `food-tracker-backend` |
+| **Region** | Same as Supabase (e.g., Oregon US West) |
+| **Branch** | `main` |
+| **Root Directory** | `backend` |
+| **Runtime** | `Node` |
+| **Build Command** | `npm install && npm run build` |
+| **Start Command** | `npm start` |
+| **Instance Type** | **Free** |
 
-5. **Create Web Service**
-   - Click **"Create Web Service"**
-   - Render will start building and deploying your backend
-   - This takes 5-10 minutes for the first deployment
-   - Watch the logs for any errors
+### 2.4 Add Environment Variables
 
-6. **Verify Deployment**
-   - Once deployed, you'll see a URL like: `https://food-tracker-backend-xxxx.onrender.com`
-   - Visit: `https://food-tracker-backend-xxxx.onrender.com/api/health`
-   - You should see: `{"status":"ok","message":"Food Tracker API is running"}`
-   - If you see ✅ "Connected to PostgreSQL database" and ✅ "Database schema initialized successfully" in the logs, you're good!
+Scroll down to **"Environment Variables"** and add these:
 
-## Step 3: Deploy Frontend to Vercel (Recommended)
+| Key | Value | Notes |
+|-----|-------|-------|
+| `NODE_ENV` | `production` | Sets environment to production |
+| `PORT` | `5000` | Port for the backend server |
+| `JWT_SECRET` | `your-random-secret-here` | Generate a random 32+ character string |
+| `DATABASE_URL` | `postgresql://postgres:...` | **Paste your Supabase connection string from Step 1.3** |
 
-1. **Go to Vercel**
-   - Visit https://vercel.com/
-   - Log in with GitHub
+**How to generate a secure JWT_SECRET:**
+```bash
+# On Mac/Linux
+openssl rand -base64 32
 
-2. **Import Project**
-   - Click **"Add New..." → "Project"**
-   - Find your `Food-Tracker` repository
-   - Click **"Import"**
+# Or use any random string generator
+# Example: kJ9mP2xQ8nR5tY7wZ3vB6cF4gH1jL0sA
+```
 
-3. **Configure Project**
-   - **Framework Preset**: Vite
-   - **Root Directory**: `frontend`
-   - **Build Command**: `npm run build` (should auto-detect)
-   - **Output Directory**: `dist` (should auto-detect)
+### 2.5 Deploy
 
-4. **Add Environment Variable**
-   - Click **"Environment Variables"**
-   - Add:
-     - **Name**: `VITE_API_URL`
-     - **Value**: `https://food-tracker-backend-xxxx.onrender.com/api` (your backend URL + `/api`)
+1. Click **"Create Web Service"**
+2. Render will start building and deploying
+3. Watch the logs - look for these success messages:
+   - ✅ `Connected to PostgreSQL database`
+   - ✅ `Database schema initialized successfully`
+   - ✅ `Seeded 67 foods to the database` (first time only)
+   - ✅ `Server is running on port 5000`
+4. First deployment takes ~5-10 minutes
 
-5. **Deploy**
-   - Click **"Deploy"**
-   - Wait 2-3 minutes
-   - You'll get a URL like: `https://food-tracker-xxxxx.vercel.app`
+### 2.6 Get Your Backend URL
 
-6. **Test the Application**
-   - Visit your Vercel URL
-   - Try adding a weight entry
-   - The data should now persist even after the backend restarts!
+Once deployed, you'll see a URL like:
+```
+https://food-tracker-backend-xxxx.onrender.com
+```
 
-## Step 4: Prevent Backend from Spinning Down
+**Test it:**
+- Visit: `https://food-tracker-backend-xxxx.onrender.com/api/health`
+- You should see: `{"status":"ok","message":"Food Tracker API is running"}`
 
-Render's free tier spins down after 15 minutes of inactivity. Your GitHub Actions workflow (already set up in `.github/workflows/keep-alive.yml`) will prevent this by pinging your backend every 10 minutes.
+✅ If you see that, your backend is working!
 
-**Set up the GitHub Actions workflow:**
+---
+
+## Step 3: Deploy Frontend to Vercel
+
+### 3.1 Sign Up and Import Project
+
+1. Go to [vercel.com](https://vercel.com)
+2. Sign up with GitHub
+3. Click **"Add New..." → "Project"**
+4. Find your `Food-Tracker` repository
+5. Click **"Import"**
+
+### 3.2 Configure Project
+
+Vercel should auto-detect your settings, but verify:
+
+| Setting | Value |
+|---------|-------|
+| **Framework Preset** | Vite |
+| **Root Directory** | `frontend` |
+| **Build Command** | `npm run build` (auto-detected) |
+| **Output Directory** | `dist` (auto-detected) |
+
+### 3.3 Add Environment Variable
+
+1. Expand **"Environment Variables"** section
+2. Add this variable:
+
+| Name | Value |
+|------|-------|
+| `VITE_API_URL` | `https://food-tracker-backend-xxxx.onrender.com/api` |
+
+Replace `xxxx` with your actual Render backend URL from Step 2.6
+
+**Important:** Make sure to add `/api` at the end!
+
+### 3.4 Deploy
+
+1. Click **"Deploy"**
+2. Wait 2-3 minutes for deployment
+3. You'll get a URL like: `https://food-tracker-xxxxx.vercel.app`
+
+### 3.5 Test Your Application
+
+1. Visit your Vercel URL
+2. Try adding a weight entry
+3. Refresh the page - your data should still be there!
+4. Your weight entries are now stored in Supabase and will persist forever ✅
+
+---
+
+## Step 4: Keep Backend Alive (GitHub Actions)
+
+Your repository already has a GitHub Actions workflow to prevent Render from spinning down.
+
+### 4.1 Add GitHub Secret
 
 1. Go to your GitHub repository
-2. Click **Settings** → **Secrets and variables** → **Actions**
+2. Click **"Settings"** → **"Secrets and variables"** → **"Actions"**
 3. Click **"New repository secret"**
 4. Add:
    - **Name**: `BACKEND_URL`
    - **Value**: `https://food-tracker-backend-xxxx.onrender.com/api/health`
-5. The workflow will automatically start running!
+5. Click **"Add secret"**
+
+The workflow will automatically ping your backend every 10 minutes to keep it awake.
+
+---
+
+## Verification Checklist
+
+After deployment, verify everything works:
+
+- [ ] Backend health endpoint responds: `your-backend-url/api/health`
+- [ ] Frontend loads at your Vercel URL
+- [ ] Can add weight entries
+- [ ] Can view weight history
+- [ ] Data persists after page refresh
+- [ ] Can add food diary entries
+- [ ] Profile page loads and saves
+
+---
+
+## Database Management (Supabase)
+
+### View Your Data
+
+1. Go to your Supabase project dashboard
+2. Click **"Table Editor"** in the sidebar
+3. You'll see all your tables:
+   - `users`
+   - `user_profiles`
+   - `foods`
+   - `food_diary`
+   - `weight_logs`
+4. Click any table to view/edit data directly
+
+### Backups
+
+Supabase free tier includes automatic backups:
+- **Point-in-time recovery**: Last 7 days
+- **Manual backups**: Export via SQL Editor
+
+### Monitoring
+
+1. Go to **"Database"** → **"Usage"**
+2. Monitor:
+   - Database size (500MB limit on free tier)
+   - Active connections
+   - Query performance
+
+---
 
 ## Troubleshooting
 
 ### Backend fails to start
 
-**Check logs in Render dashboard:**
-- Look for database connection errors
-- Verify `DATABASE_URL` is set correctly
-- Make sure you used the **Internal Database URL**, not External
+**Check Render logs for errors:**
 
-### Database connection errors
+1. Go to Render dashboard → Your service
+2. Click **"Logs"** tab
+3. Look for:
+   - `❌ Unexpected error on idle client` - Database connection failed
+   - `❌ Failed to start server` - Check environment variables
 
-**Common issues:**
-- Wrong connection string format
-- Using External URL instead of Internal URL
-- Database not fully provisioned (wait a few minutes)
+**Common fixes:**
+- Verify `DATABASE_URL` is correct (includes password)
+- Check Supabase project is not paused
+- Verify Supabase allows connections from anywhere (default)
+
+### Database connection timeout
+
+**Issue:** Backend can't connect to Supabase
+
+**Solutions:**
+1. Check Supabase project status (go to dashboard)
+2. Verify connection string format:
+   ```
+   postgresql://postgres:PASSWORD@HOST:5432/postgres
+   ```
+3. Make sure you replaced `[YOUR-PASSWORD]` with actual password
+4. Check Supabase isn't paused (free projects pause after 1 week of inactivity)
+
+**Wake up paused project:**
+- Go to Supabase dashboard
+- Click your project
+- It will automatically resume
 
 ### Frontend can't connect to backend
 
 **Check:**
-- `VITE_API_URL` in Vercel environment variables
-- Backend health endpoint is accessible: `https://your-backend.onrender.com/api/health`
-- CORS is enabled (it should be by default)
+1. `VITE_API_URL` in Vercel environment variables
+2. Should be: `https://your-backend.onrender.com/api` (with `/api`)
+3. Redeploy frontend after changing environment variables
 
-### Data still disappearing
+### Data not persisting
 
 **Verify:**
-- You're using PostgreSQL, not SQLite (check backend logs for "Connected to PostgreSQL")
-- Database schema was initialized (check logs for "Database schema initialized successfully")
-- Connection string is correct
-
-## Cost Summary
-
-**Free Tier Limits:**
-
-| Service | Plan | Cost | Limits |
-|---------|------|------|--------|
-| **Render PostgreSQL** | Free | $0 | 1 GB storage, 97 hours/month compute |
-| **Render Web Service** | Free | $0 | Spins down after 15 min, 750 hours/month |
-| **Vercel** | Hobby | $0 | 100 GB bandwidth, unlimited sites |
-| **GitHub Actions** | Free | $0 | 2000 minutes/month (using ~30 min/month) |
-
-**Total Monthly Cost: $0** ✅
-
-The PostgreSQL free tier is perfect for personal use. If you exceed the 97 hours compute time, your database will stop temporarily until the next billing cycle, but your data remains safe.
-
-## Upgrading (Optional)
-
-If you need more reliability or usage:
-
-- **Render PostgreSQL**: $7/month for Starter plan (unlimited compute, better performance)
-- **Render Web Service**: $7/month (always on, no spin down)
-
-## Next Steps
-
-1. **Add More Data**: Your weight entries and food diary will now persist permanently
-2. **Share Your App**: Send the Vercel URL to friends and family
-3. **Monitor Usage**: Check Render dashboard to see database usage
-
-## Support
-
-If you run into issues:
-- Check Render logs: Click your service → "Logs" tab
-- Check Vercel logs: Click your project → "Deployments" → select deployment → "View Build Logs"
-- Verify environment variables are set correctly
+1. Backend logs show: `✅ Connected to PostgreSQL database`
+2. Not using SQLite (old database.ts should be updated)
+3. Check Supabase Table Editor - data should appear there
 
 ---
 
-**Congratulations!** 🎉 Your Food Tracker now has persistent data storage with PostgreSQL!
+## Costs & Limits
+
+### Supabase Free Tier
+
+| Resource | Limit | Your Usage |
+|----------|-------|------------|
+| **Database Storage** | 500 MB | ~1-10 MB (personal use) |
+| **Bandwidth** | 2 GB/month | ~10-100 MB (personal use) |
+| **Projects** | Unlimited | You only need 1 |
+| **Expiration** | **Never** ✅ | No time limit |
+| **Backups** | 7 days | Automatic |
+
+**Pausing:** Projects pause after 1 week of inactivity. Just visit the dashboard to wake it up.
+
+### Render Free Tier
+
+| Resource | Limit |
+|----------|-------|
+| **Compute** | 750 hours/month |
+| **Bandwidth** | 100 GB/month |
+| **Spin Down** | After 15 min inactivity |
+| **Build Time** | 500 min/month |
+
+**With GitHub Actions keep-alive:** Your backend stays awake 24/7
+
+### Vercel Free Tier
+
+| Resource | Limit |
+|----------|-------|
+| **Bandwidth** | 100 GB/month |
+| **Builds** | Unlimited |
+| **Sites** | Unlimited |
+
+### Total Monthly Cost
+
+**$0** ✅ Everything is completely free!
+
+---
+
+## Scaling Up (Optional)
+
+If you exceed free tier limits or want better performance:
+
+### Supabase Pro ($25/month)
+- 8 GB database storage
+- 50 GB bandwidth
+- Point-in-time recovery (up to 30 days)
+- Daily backups
+- Better performance
+
+### Render Paid Plan ($7/month)
+- Always-on (no spin down)
+- Faster builds
+- More compute power
+
+### Keep Free Tier Longer
+
+**Optimize database usage:**
+1. Delete old food diary entries periodically
+2. Remove duplicate foods
+3. Archive old weight logs (export to CSV)
+
+**Monitor usage:**
+- Supabase: Dashboard → Database → Usage
+- Render: Dashboard → Your service → Metrics
+
+---
+
+## Next Steps
+
+1. ✅ Your app is deployed with persistent storage!
+2. Share your Vercel URL with friends and family
+3. Add weight entries - they'll persist forever
+4. Consider adding custom foods and tracking meals
+
+## Updating Your App
+
+When you push changes to GitHub:
+
+- **Backend (Render)**: Auto-deploys from `main` branch
+- **Frontend (Vercel)**: Auto-deploys from `main` branch
+- **Database (Supabase)**: Schema changes require migration
+
+**To update database schema:**
+1. Update your models in code
+2. Push to GitHub (backend will redeploy)
+3. On first startup, `initializeDatabase()` will run migrations
+
+---
+
+## Support
+
+### Having issues?
+
+1. **Check logs:**
+   - Render: Dashboard → Service → Logs
+   - Vercel: Dashboard → Project → Deployments → Build logs
+   - Supabase: Dashboard → Logs
+
+2. **Common errors:**
+   - `ECONNREFUSED`: Backend URL wrong in frontend
+   - `password authentication failed`: Wrong database password
+   - `relation does not exist`: Database not initialized
+
+3. **Resources:**
+   - Supabase Docs: [docs.supabase.com](https://supabase.com/docs)
+   - Render Docs: [render.com/docs](https://render.com/docs)
+   - Vercel Docs: [vercel.com/docs](https://vercel.com/docs)
+
+---
+
+**Congratulations!** 🎉
+
+Your Food Tracker now has:
+- ✅ Free PostgreSQL database (no expiration)
+- ✅ Deployed backend on Render
+- ✅ Deployed frontend on Vercel
+- ✅ Persistent data storage
+- ✅ Automatic deployments from GitHub
+
+Your weight entries and food diary will now persist forever!
