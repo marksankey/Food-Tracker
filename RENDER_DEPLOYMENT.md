@@ -88,6 +88,8 @@ Fill in the following settings:
 
 ### 2.4 Add Environment Variables
 
+**⚠️ CRITICAL:** You must set these environment variables or deployment will fail.
+
 Scroll down to **"Environment Variables"** and add these:
 
 | Key | Value | Notes |
@@ -95,7 +97,12 @@ Scroll down to **"Environment Variables"** and add these:
 | `NODE_ENV` | `production` | Sets environment to production |
 | `PORT` | `5000` | Port for the backend server |
 | `JWT_SECRET` | `your-random-secret-here` | Generate a random 32+ character string |
-| `DATABASE_URL` | `postgresql://postgres:...` | **Paste your Supabase connection string from Step 1.3** |
+| `DATABASE_URL` | `postgresql://postgres:...` | **⚠️ REQUIRED: Paste your Supabase connection string from Step 1.3** |
+
+**⚠️ IMPORTANT:** The `DATABASE_URL` is **REQUIRED**. Without it, your deployment will fail with `ECONNREFUSED` error. Make sure to:
+- Copy the full connection string from Supabase (Step 1.3)
+- Replace `[YOUR-PASSWORD]` with your actual database password
+- The format must be: `postgresql://postgres:PASSWORD@HOST:5432/postgres`
 
 **How to generate a secure JWT_SECRET:**
 ```bash
@@ -245,6 +252,36 @@ Supabase free tier includes automatic backups:
 
 ## Troubleshooting
 
+### ❌ Error: ECONNREFUSED 127.0.0.1:5432
+
+**This is the most common deployment error.**
+
+**Cause:** The `DATABASE_URL` environment variable is not set or is incorrect.
+
+**Symptoms:**
+- Deployment logs show: `Error: connect ECONNREFUSED 127.0.0.1:5432`
+- Backend exits with status 1
+
+**Fix:**
+1. Go to Render dashboard → Your service → Environment
+2. Verify `DATABASE_URL` is set
+3. Check the value matches your Supabase connection string:
+   ```
+   postgresql://postgres:YOUR_PASSWORD@db.xxxxx.supabase.co:5432/postgres
+   ```
+4. Make sure you replaced `[YOUR-PASSWORD]` with your actual password
+5. Redeploy by clicking "Manual Deploy" → "Deploy latest commit"
+
+**Quick verification:**
+- The new validation will show this before attempting connection:
+  ```
+  ✅ Database URL configured
+     Host: db.xxxxx.supabase.co
+     Port: 5432
+     Database: postgres
+  ```
+- If you see `❌ FATAL ERROR: DATABASE_URL environment variable is not set`, add it in Render environment variables
+
 ### Backend fails to start
 
 **Check Render logs for errors:**
@@ -252,6 +289,7 @@ Supabase free tier includes automatic backups:
 1. Go to Render dashboard → Your service
 2. Click **"Logs"** tab
 3. Look for:
+   - `❌ FATAL ERROR: DATABASE_URL environment variable is not set` - Add DATABASE_URL to environment variables
    - `❌ Unexpected error on idle client` - Database connection failed
    - `❌ Failed to start server` - Check environment variables
 

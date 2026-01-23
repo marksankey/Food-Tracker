@@ -3,9 +3,50 @@ import { v4 as uuidv4 } from 'uuid';
 
 const { Pool } = pg;
 
+// Validate DATABASE_URL before attempting connection
+if (!process.env.DATABASE_URL) {
+  console.error('❌ FATAL ERROR: DATABASE_URL environment variable is not set');
+  console.error('');
+  console.error('Please set the DATABASE_URL environment variable with your PostgreSQL connection string.');
+  console.error('');
+  console.error('Expected format:');
+  console.error('  postgresql://username:password@host:5432/database');
+  console.error('');
+  console.error('For deployment on Render with Supabase:');
+  console.error('  1. Get your connection string from Supabase project settings');
+  console.error('  2. Add DATABASE_URL to your Render environment variables');
+  console.error('  3. Redeploy your application');
+  console.error('');
+  process.exit(1);
+}
+
+// Validate DATABASE_URL format
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl.startsWith('postgres://') && !databaseUrl.startsWith('postgresql://')) {
+  console.error('❌ FATAL ERROR: DATABASE_URL must start with postgres:// or postgresql://');
+  console.error(`Received: ${databaseUrl.substring(0, 20)}...`);
+  console.error('');
+  console.error('Expected format:');
+  console.error('  postgresql://username:password@host:5432/database');
+  console.error('');
+  process.exit(1);
+}
+
+// Warn if using localhost in production
+if (process.env.NODE_ENV === 'production' && (databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1'))) {
+  console.error('⚠️  WARNING: DATABASE_URL contains localhost in production environment');
+  console.error('   This will likely fail in deployment. Use a hosted database like Supabase.');
+  console.error('');
+}
+
+console.log('✅ Database URL configured');
+console.log(`   Host: ${new URL(databaseUrl).hostname}`);
+console.log(`   Port: ${new URL(databaseUrl).port || '5432'}`);
+console.log(`   Database: ${new URL(databaseUrl).pathname.substring(1)}`);
+
 // Database connection pool
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: databaseUrl,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
