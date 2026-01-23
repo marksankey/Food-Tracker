@@ -32,6 +32,55 @@ if (!databaseUrl.startsWith('postgres://') && !databaseUrl.startsWith('postgresq
   process.exit(1);
 }
 
+// Parse URL for validation
+let parsedUrl;
+try {
+  parsedUrl = new URL(databaseUrl);
+} catch (error) {
+  console.error('❌ FATAL ERROR: DATABASE_URL is not a valid URL');
+  console.error(`Error: ${error instanceof Error ? error.message : 'Invalid URL format'}`);
+  console.error('');
+  console.error('Expected format:');
+  console.error('  postgresql://username:password@host:5432/database');
+  console.error('');
+  process.exit(1);
+}
+
+// Check for placeholder values
+const hostname = parsedUrl.hostname.toLowerCase();
+if (hostname.includes('xxx') || hostname.includes('your-') || hostname === 'host' || hostname === 'localhost') {
+  console.error('❌ FATAL ERROR: DATABASE_URL contains placeholder values');
+  console.error(`   Hostname: ${parsedUrl.hostname}`);
+  console.error('');
+  console.error('You need to replace the placeholder with your actual Supabase database hostname.');
+  console.error('');
+  console.error('Steps to fix:');
+  console.error('  1. Go to your Supabase project: https://supabase.com/dashboard/project/_/settings/database');
+  console.error('  2. Look for "Connection string" under "Connection pooling"');
+  console.error('  3. Copy the FULL connection string (starts with postgresql://postgres:...)');
+  console.error('  4. Replace [YOUR-PASSWORD] with your actual database password');
+  console.error('  5. Set it as DATABASE_URL in Render environment variables');
+  console.error('');
+  console.error('The hostname should look like: db.abcdefghijklm.supabase.co');
+  console.error('');
+  process.exit(1);
+}
+
+// Check for password placeholder
+if (databaseUrl.includes('[YOUR-PASSWORD]') || databaseUrl.includes('YOUR_PASSWORD')) {
+  console.error('❌ FATAL ERROR: DATABASE_URL contains password placeholder');
+  console.error('');
+  console.error('You need to replace [YOUR-PASSWORD] with your actual Supabase database password.');
+  console.error('');
+  console.error('Steps to fix:');
+  console.error('  1. Go to your Supabase project settings: Settings → Database');
+  console.error('  2. Find your database password (you set this when creating the project)');
+  console.error('  3. Replace [YOUR-PASSWORD] in the connection string with the actual password');
+  console.error('  4. Update DATABASE_URL in Render environment variables');
+  console.error('');
+  process.exit(1);
+}
+
 // Warn if using localhost in production
 if (process.env.NODE_ENV === 'production' && (databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1'))) {
   console.error('⚠️  WARNING: DATABASE_URL contains localhost in production environment');
@@ -40,9 +89,9 @@ if (process.env.NODE_ENV === 'production' && (databaseUrl.includes('localhost') 
 }
 
 console.log('✅ Database URL configured');
-console.log(`   Host: ${new URL(databaseUrl).hostname}`);
-console.log(`   Port: ${new URL(databaseUrl).port || '5432'}`);
-console.log(`   Database: ${new URL(databaseUrl).pathname.substring(1)}`);
+console.log(`   Host: ${parsedUrl.hostname}`);
+console.log(`   Port: ${parsedUrl.port || '5432'}`);
+console.log(`   Database: ${parsedUrl.pathname.substring(1)}`);
 
 // Database connection pool
 export const pool = new Pool({
@@ -60,8 +109,71 @@ pool.on('error', (err) => {
   process.exit(-1);
 });
 
+// Helper function to retry connection with exponential backoff
+const connectWithRetry = async (maxRetries = 5, initialDelay = 2000): Promise<pg.PoolClient> => {
+  let lastError: any;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 Attempting to connect to database (attempt ${attempt}/${maxRetries})...`);
+      const client = await pool.connect();
+      console.log('✅ Successfully connected to database');
+      return client;
+    } catch (error: any) {
+      lastError = error;
+
+      // Provide specific error guidance
+      if (error.code === 'ENOTFOUND') {
+        console.error(`❌ DNS lookup failed for hostname: ${error.hostname}`);
+        console.error('');
+        console.error('This usually means:');
+        console.error('  1. The database hostname in DATABASE_URL is incorrect');
+        console.error('  2. Your Supabase project might be paused or deleted');
+        console.error('  3. There is a network connectivity issue');
+        console.error('');
+        console.error('Please verify:');
+        console.error('  - Your Supabase project is active at https://supabase.com/dashboard');
+        console.error('  - The DATABASE_URL hostname matches your Supabase project');
+        console.error('  - The format is: postgresql://postgres:PASSWORD@db.PROJECTID.supabase.co:5432/postgres');
+        console.error('');
+      } else if (error.code === 'ECONNREFUSED') {
+        console.error(`❌ Connection refused: ${error.address}:${error.port}`);
+        console.error('');
+        console.error('The database server is not accepting connections.');
+        console.error('');
+      } else if (error.code === 'ETIMEDOUT') {
+        console.error('❌ Connection timeout');
+        console.error('');
+        console.error('The database server is not responding.');
+        console.error('');
+      } else if (error.message?.includes('password authentication failed')) {
+        console.error('❌ Authentication failed');
+        console.error('');
+        console.error('The database password in DATABASE_URL is incorrect.');
+        console.error('');
+      }
+
+      // Don't retry for authentication errors or DNS errors
+      if (error.code === 'ENOTFOUND' || error.message?.includes('password authentication failed')) {
+        console.error('❌ Connection failed - not retrying for this error type');
+        throw error;
+      }
+
+      // Retry with exponential backoff for other errors
+      if (attempt < maxRetries) {
+        const delay = initialDelay * Math.pow(2, attempt - 1);
+        console.log(`⏳ Retrying in ${delay / 1000} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  console.error(`❌ Failed to connect after ${maxRetries} attempts`);
+  throw lastError;
+};
+
 export const initializeDatabase = async () => {
-  const client = await pool.connect();
+  const client = await connectWithRetry();
 
   try {
     // Users table

@@ -252,35 +252,152 @@ Supabase free tier includes automatic backups:
 
 ## Troubleshooting
 
-### ❌ Error: ECONNREFUSED 127.0.0.1:5432
-
-**This is the most common deployment error.**
-
-**Cause:** The `DATABASE_URL` environment variable is not set or is incorrect.
+### ❌ Error: DATABASE_URL environment variable is not set
 
 **Symptoms:**
-- Deployment logs show: `Error: connect ECONNREFUSED 127.0.0.1:5432`
-- Backend exits with status 1
+- Deployment logs show: `❌ FATAL ERROR: DATABASE_URL environment variable is not set`
 
 **Fix:**
 1. Go to Render dashboard → Your service → Environment
-2. Verify `DATABASE_URL` is set
-3. Check the value matches your Supabase connection string:
-   ```
-   postgresql://postgres:YOUR_PASSWORD@db.xxxxx.supabase.co:5432/postgres
-   ```
-4. Make sure you replaced `[YOUR-PASSWORD]` with your actual password
-5. Redeploy by clicking "Manual Deploy" → "Deploy latest commit"
+2. Add `DATABASE_URL` environment variable
+3. Set the value to your Supabase connection string (see Step 1.3)
+4. Redeploy by clicking "Manual Deploy" → "Deploy latest commit"
 
-**Quick verification:**
-- The new validation will show this before attempting connection:
-  ```
-  ✅ Database URL configured
-     Host: db.xxxxx.supabase.co
-     Port: 5432
-     Database: postgres
-  ```
-- If you see `❌ FATAL ERROR: DATABASE_URL environment variable is not set`, add it in Render environment variables
+---
+
+### ❌ Error: DATABASE_URL contains placeholder values
+
+**Symptoms:**
+- Deployment logs show: `❌ FATAL ERROR: DATABASE_URL contains placeholder values`
+- Hostname shows: `db.xxxxx.supabase.co` or similar placeholder
+
+**Cause:** You copied the example connection string instead of your actual Supabase connection string.
+
+**Fix:**
+1. Go to Supabase Dashboard: https://supabase.com/dashboard/project/_/settings/database
+2. Scroll to "Connection pooling" section (or "Connection string")
+3. Copy the **actual** connection string (NOT the example from this guide)
+4. Your hostname should look like: `db.abcdefghijklm.supabase.co` (with real letters/numbers, not "xxxxx")
+5. Replace `[YOUR-PASSWORD]` with your actual database password
+6. Update `DATABASE_URL` in Render environment variables
+7. Redeploy
+
+---
+
+### ❌ Error: DNS lookup failed (ENOTFOUND)
+
+**Symptoms:**
+- Deployment logs show: `❌ DNS lookup failed for hostname: db.xxxxx.supabase.co`
+- Error code: `ENOTFOUND`
+
+**Cause:** The database hostname cannot be found.
+
+**This usually means:**
+1. The database hostname in `DATABASE_URL` is incorrect or contains placeholders
+2. Your Supabase project might be paused or deleted
+3. There is a network connectivity issue
+
+**Fix:**
+
+**Step 1: Verify your Supabase project is active**
+- Go to https://supabase.com/dashboard
+- Check your project status (should show "Active", not "Paused")
+- If paused, click on the project to restore it
+
+**Step 2: Get the correct DATABASE_URL**
+1. In Supabase, go to **Project Settings** → **Database**
+2. Scroll to **"Connection string"** section
+3. Select **"URI"** tab
+4. Copy the connection string - it will look like:
+   ```
+   postgresql://postgres:[YOUR-PASSWORD]@db.abcdefghijklm.supabase.co:5432/postgres
+   ```
+5. **Replace `[YOUR-PASSWORD]`** with your actual database password (the one you set when creating the project)
+6. The final string should look like:
+   ```
+   postgresql://postgres:MyActualPassword123@db.abcdefghijklm.supabase.co:5432/postgres
+   ```
+
+**Step 3: Update in Render**
+1. Go to Render dashboard → Your service → Environment
+2. Update `DATABASE_URL` with the corrected connection string
+3. Click "Save Changes"
+4. Redeploy: "Manual Deploy" → "Deploy latest commit"
+
+---
+
+### ❌ Error: password authentication failed
+
+**Symptoms:**
+- Deployment logs show: `❌ Authentication failed`
+- Error message: `password authentication failed for user "postgres"`
+
+**Cause:** The password in your DATABASE_URL is incorrect.
+
+**Fix:**
+1. Go to Supabase → **Project Settings** → **Database**
+2. Scroll to **"Database password"** section
+3. Click **"Reset database password"** to create a new password
+4. Copy the new password
+5. Update your DATABASE_URL with the new password:
+   ```
+   postgresql://postgres:NEW_PASSWORD@db.xxx.supabase.co:5432/postgres
+   ```
+6. Make sure there are NO brackets around the password (remove `[` and `]`)
+7. Update `DATABASE_URL` in Render environment variables
+8. Redeploy
+
+---
+
+### ❌ Error: ECONNREFUSED 127.0.0.1:5432
+
+**Symptoms:**
+- Deployment logs show: `Error: connect ECONNREFUSED 127.0.0.1:5432`
+
+**Cause:** The application is trying to connect to localhost instead of Supabase.
+
+**Fix:**
+This indicates `DATABASE_URL` is not set at all. Follow the steps in "DATABASE_URL environment variable is not set" above.
+
+---
+
+### 🔍 Quick Verification Checklist
+
+**Before deploying, check your DATABASE_URL:**
+
+✅ **Correct format:**
+```
+postgresql://postgres:MyPassword123@db.abcdefghijklm.supabase.co:5432/postgres
+```
+
+❌ **Common mistakes:**
+```
+postgresql://postgres:[YOUR-PASSWORD]@db.xxx.supabase.co:5432/postgres  ← Password placeholder
+postgresql://postgres:MyPassword123@db.xxxxx.supabase.co:5432/postgres   ← Host placeholder
+postgresql://postgres:MyPassword123@localhost:5432/postgres              ← Using localhost
+```
+
+**Good deployment logs should show:**
+```
+✅ Database URL configured
+   Host: db.abcdefghijklm.supabase.co  ← Real project ID
+   Port: 5432
+   Database: postgres
+🔄 Attempting to connect to database (attempt 1/5)...
+✅ Successfully connected to database
+✅ Database schema initialized successfully
+✅ Server is running on port 5000
+```
+
+**Bad deployment logs:**
+```
+❌ FATAL ERROR: DATABASE_URL environment variable is not set
+❌ FATAL ERROR: DATABASE_URL contains placeholder values
+❌ DNS lookup failed for hostname: db.xxxxx.supabase.co
+❌ Authentication failed
+```
+
+---
 
 ### Backend fails to start
 
@@ -288,15 +405,12 @@ Supabase free tier includes automatic backups:
 
 1. Go to Render dashboard → Your service
 2. Click **"Logs"** tab
-3. Look for:
-   - `❌ FATAL ERROR: DATABASE_URL environment variable is not set` - Add DATABASE_URL to environment variables
-   - `❌ Unexpected error on idle client` - Database connection failed
-   - `❌ Failed to start server` - Check environment variables
+3. Look for error messages (see sections above for specific fixes)
 
 **Common fixes:**
-- Verify `DATABASE_URL` is correct (includes password)
-- Check Supabase project is not paused
-- Verify Supabase allows connections from anywhere (default)
+- Verify `DATABASE_URL` is correct (no placeholders, includes real password)
+- Check Supabase project is active (not paused)
+- Verify the connection string format matches the correct format above
 
 ### Database connection timeout
 
