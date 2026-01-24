@@ -5,12 +5,18 @@ import './ProductSearch.css';
 
 interface ProductSearchProps {
   onProductSaved?: () => void;
+  searchQuery?: string;
+  onSearchQueryChange?: (query: string) => void;
 }
 
-const ProductSearch = ({ onProductSaved }: ProductSearchProps) => {
+const ProductSearch = ({ onProductSaved, searchQuery: externalSearchQuery, onSearchQueryChange }: ProductSearchProps) => {
   const [searchType, setSearchType] = useState<'name' | 'barcode'>('name');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
+
+  // Use external search query if provided, otherwise use internal state
+  const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : internalSearchQuery;
+  const setSearchQuery = onSearchQueryChange || setInternalSearchQuery;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');

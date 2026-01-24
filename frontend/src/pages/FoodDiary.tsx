@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { diaryAPI, foodAPI } from '../services/api';
 import { FoodDiaryEntry, Food } from '../types';
 import { format, addDays, subDays } from 'date-fns';
@@ -168,6 +169,12 @@ const FoodDiary = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              <p className="search-help">
+                Can't find what you're looking for?{' '}
+                <Link to="/foods" className="search-database-link">
+                  Search Food Database
+                </Link>
+              </p>
             </div>
             <div className="form-group">
               <label>Select Food</label>

@@ -209,7 +209,11 @@ const FoodDatabase = () => {
         </>
       ) : (
         <div className="card">
-          <ProductSearch onProductSaved={loadFoods} />
+          <ProductSearch
+            onProductSaved={loadFoods}
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
+          />
         </div>
       )}
     </div>
