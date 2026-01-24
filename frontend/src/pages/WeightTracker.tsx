@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { weightAPI } from '../services/api';
 import { WeightLog } from '../types';
 import { format } from 'date-fns';
+import { useAuth } from '../store/AuthContext';
 import './WeightTracker.css';
 
 const WeightTracker = () => {
+  const { profile, updateProfile } = useAuth();
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -68,6 +70,14 @@ const WeightTracker = () => {
       // Convert to kg based on input unit
       const weightInKg = inputUnit === 'imperial' ? stonesToKg(stones, pounds) : weight;
       await weightAPI.add({ date, weight: weightInKg, notes });
+
+      // Update the user's profile currentWeight to keep dashboard in sync
+      // Only update if this is the most recent entry (date >= all existing dates)
+      const isLatestEntry = weightLogs.length === 0 || date >= weightLogs[0].date;
+      if (isLatestEntry) {
+        await updateProfile({ currentWeight: weightInKg });
+      }
+
       setShowAddModal(false);
       setWeight(0);
       setStones(0);
@@ -86,6 +96,17 @@ const WeightTracker = () => {
 
     try {
       await weightAPI.delete(id);
+
+      // If we deleted the most recent entry, update profile with the new most recent weight
+      const deletedEntry = weightLogs.find(log => log.id === id);
+      if (deletedEntry && weightLogs.length > 0 && deletedEntry.date === weightLogs[0].date) {
+        // Get the next most recent entry after deletion
+        const remainingLogs = weightLogs.filter(log => log.id !== id);
+        if (remainingLogs.length > 0) {
+          await updateProfile({ currentWeight: remainingLogs[0].weight });
+        }
+      }
+
       loadWeightLogs();
     } catch (error) {
       console.error('Failed to delete weight log:', error);
@@ -93,16 +114,24 @@ const WeightTracker = () => {
   };
 
   const getWeightChange = () => {
-    if (weightLogs.length < 2) return null;
+    if (weightLogs.length === 0) return null;
     const latest = weightLogs[0].weight;
-    const previous = weightLogs[1].weight;
+    // If only 1 entry, compare to profile's startingWeight
+    // If 2+ entries, compare to the previous entry
+    const previous = weightLogs.length >= 2
+      ? weightLogs[1].weight
+      : profile?.startingWeight;
+    if (!previous) return null;
     return latest - previous;
   };
 
   const getTotalLoss = () => {
-    if (weightLogs.length < 2) return null;
+    if (weightLogs.length === 0) return null;
     const latest = weightLogs[0].weight;
-    const starting = weightLogs[weightLogs.length - 1].weight;
+    // Use profile's startingWeight if available, otherwise use oldest weight log entry
+    const starting = profile?.startingWeight || weightLogs[weightLogs.length - 1].weight;
+    // Only show total loss if we have a starting weight to compare against
+    if (!starting || starting === latest) return null;
     return starting - latest;
   };
 
