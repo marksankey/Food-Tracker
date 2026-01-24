@@ -24,7 +24,8 @@ This is a comprehensive food tracking application based on Slimming World princi
 ### Backend (`/backend`)
 - **Runtime**: Node.js with TypeScript
 - **Framework**: Express.js
-- **Database**: SQLite (better-sqlite3)
+- **Database**: PostgreSQL (pg library)
+- **Database Hosting**: Supabase (production)
 - **Authentication**: No authentication (personal app)
 - **Password Security**: bcrypt (for legacy auth routes)
 - **Port**: 5000 (development)
@@ -47,14 +48,17 @@ Food-Tracker/
 ├── backend/              # Express API
 │   ├── src/
 │   │   ├── controllers/  # Route handlers
-│   │   ├── models/       # Database models
+│   │   ├── models/       # Database models (PostgreSQL queries)
 │   │   ├── routes/       # API route definitions
 │   │   ├── middleware/   # Auth middleware (noauth.js for personal use)
-│   │   ├── config/       # Database configuration
-│   │   └── utils/        # Seed data and utilities
-│   ├── database/         # SQLite database file
+│   │   ├── config/       # Database configuration (PostgreSQL pool)
+│   │   └── utils/        # Utilities
 │   ├── .env             # Backend environment variables
 │   └── package.json
+│
+├── .github/
+│   └── workflows/
+│       └── keep-alive.yml  # Prevents Render app spindown
 │
 ├── README.md            # User documentation
 ├── SPECIFICATION.md     # Detailed requirements
@@ -185,6 +189,23 @@ npm run preview      # Test production build
 ## Important Notes
 
 ### Recent Changes
+**2026-01-23**: Database connection error handling and diagnostics
+- Added comprehensive DATABASE_URL validation on startup
+- Improved error messages with specific guidance for common issues (DNS, auth, timeouts)
+- Added connection retry with exponential backoff for transient failures
+- Related PRs: #43, #44
+
+**2026-01-22**: Deployment infrastructure improvements
+- Updated deployment guide to use Supabase for PostgreSQL hosting
+- Fixed async/await issues for PostgreSQL migration
+- Related PRs: #42
+
+**2026-01-21**: Major database and feature updates
+- **PostgreSQL Migration**: Migrated from SQLite to PostgreSQL for persistent data storage
+- **Imperial Weight Support**: Added stones and pounds format for weight tracking
+- **Keep-Alive Workflow**: Added GitHub Actions workflow to prevent Render app spindown
+- Related PRs: #38, #39, #40, #41
+
 **2026-01-20**: Major improvements to syn calculation accuracy
 - Fixed serving size parsing to handle complex formats (e.g., "100g/3 slices")
 - Capped serving sizes at 200g to prevent inflated syn values from large portions
@@ -211,12 +232,18 @@ npm run preview      # Test production build
 PORT=5000
 JWT_SECRET=your-secret-key-change-in-production
 NODE_ENV=development
-DATABASE_PATH=./database/food-tracker.db
+DATABASE_URL=postgresql://username:password@localhost:5432/food_tracker
 ```
 
 **Frontend (.env)**
 ```
 VITE_API_URL=http://localhost:5000/api
+```
+
+**GitHub Actions Secrets**
+```
+BACKEND_URL=https://your-backend.onrender.com/api/health
+FRONTEND_URL=https://your-frontend.vercel.app (optional)
 ```
 
 ### Security Considerations
@@ -228,10 +255,12 @@ VITE_API_URL=http://localhost:5000/api
 - **WARNING**: Do not use in production with multiple users without proper authentication
 
 ### Database Management
-- SQLite database created automatically on first run
-- Seed script (`npm run seed`) resets database
-- Database file: `backend/database/food-tracker.db`
-- Uses better-sqlite3 (synchronous, faster than node-sqlite3)
+- PostgreSQL database with automatic schema initialization on startup
+- Database auto-seeds with 60+ foods if empty on first run
+- Uses connection pooling with retry logic for reliability
+- **Production**: Hosted on Supabase (free tier available)
+- **Local development**: Requires local PostgreSQL or use Supabase
+- Connection string format: `postgresql://user:password@host:5432/database`
 
 ### State Management
 - Frontend uses React Context API
@@ -308,9 +337,10 @@ Create test users with different scenarios:
 - Check CORS settings in backend
 
 **Database errors**
-- Delete database file and run `npm run seed`
-- Check DATABASE_PATH in backend/.env
-- Ensure write permissions on database directory
+- Verify DATABASE_URL is set correctly in backend/.env
+- Check PostgreSQL connection string format: `postgresql://user:pass@host:5432/db`
+- For Supabase: ensure project is active and password is correct
+- Startup logs show detailed error messages with fix suggestions
 
 **Authentication issues**
 - Authentication is simplified for personal use (no JWT required)
@@ -356,7 +386,7 @@ Create test users with different scenarios:
 - Branch names must start with 'claude/' and include session ID for push to succeed
 
 ### Current Development Branch
-- Working branch: `claude/update-claude-md-1y0FO`
+- Working branch: `claude/update-claude-md-S9EpI`
 - Purpose: Update documentation to reflect recent changes
 
 ## Contact & Resources
