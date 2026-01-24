@@ -299,26 +299,79 @@ export const initializeDatabase = async () => {
 
 const seedDatabase = async (client: pg.PoolClient) => {
   const foods = [
-    // Free Foods - Proteins
+    // Free Foods - Meat and Poultry (cooked without oil, lean cuts, skin removed)
     { name: 'Chicken Breast (skinless)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
     { name: 'Turkey Breast', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Lean Beef Mince (5% fat)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Pork Tenderloin (lean)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Lean Ham', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Gammon (fat removed)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Lean Lamb', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Venison', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+
+    // Free Foods - Eggs (cooked without butter, oil or fat)
     { name: 'Eggs', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 1, portionUnit: 'egg' },
+    { name: 'Boiled Eggs', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 1, portionUnit: 'egg' },
+    { name: 'Poached Eggs', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 1, portionUnit: 'egg' },
+    { name: 'Scrambled Eggs (no fat)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 1, portionUnit: 'egg' },
+
+    // Free Foods - Fish (fresh and frozen, cooked without fat)
     { name: 'White Fish (cod, haddock)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
     { name: 'Salmon', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
     { name: 'Tuna (in brine)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Tuna Steak (fresh)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
     { name: 'Prawns', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
-    { name: 'Tofu', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
-    { name: 'Lean Beef Mince (5% fat)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
-    { name: 'Pork Tenderloin (lean)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Sea Bass', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Trout', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Mackerel (fresh)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Plaice', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Smoked Salmon', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Smoked Haddock', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Crab', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Mussels', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Squid', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
 
-    // Free Foods - Carbs
+    // Free Foods - Plant-based Proteins
+    { name: 'Tofu (plain)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Smoked Tofu', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Quorn Mince', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Quorn Pieces', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Seitan (plain)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+    { name: 'Textured Soya Protein (TVP)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'protein', portionSize: 100, portionUnit: 'g' },
+
+    // Free Foods - Fat-free Dairy
+    { name: 'Fat-free Natural Yogurt', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'dairy', portionSize: 100, portionUnit: 'g' },
+    { name: 'Skyr', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'dairy', portionSize: 100, portionUnit: 'g' },
+    { name: 'Plain Quark', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'dairy', portionSize: 100, portionUnit: 'g' },
+    { name: 'Fat-free Fromage Frais', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'dairy', portionSize: 100, portionUnit: 'g' },
+    { name: 'Plain Soya Yogurt (with calcium)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'dairy', portionSize: 100, portionUnit: 'g' },
+
+    // Free Foods - Pasta, Rice and Grains (cooked without fat or oil)
     { name: 'Pasta (dried)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 75, portionUnit: 'g' },
     { name: 'Rice (dried)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 75, portionUnit: 'g' },
+    { name: 'Noodles (egg noodles)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 75, portionUnit: 'g' },
+    { name: 'Rice Noodles', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 75, portionUnit: 'g' },
+    { name: 'Couscous (dried)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 60, portionUnit: 'g' },
+    { name: 'Bulgur Wheat', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 60, portionUnit: 'g' },
+    { name: 'Quinoa', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 60, portionUnit: 'g' },
+
+    // Free Foods - Potatoes (cooked without fat)
     { name: 'Potatoes', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 150, portionUnit: 'g' },
     { name: 'Sweet Potatoes', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 150, portionUnit: 'g' },
-    { name: 'Couscous (dried)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 60, portionUnit: 'g' },
+    { name: 'Baked Potato', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 200, portionUnit: 'g' },
+    { name: 'Boiled Potatoes', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 150, portionUnit: 'g' },
+    { name: 'Mashed Potato (no fat)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 150, portionUnit: 'g' },
+    { name: 'New Potatoes', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 150, portionUnit: 'g' },
+
+    // Free Foods - Beans, Peas and Lentils
     { name: 'Beans (kidney, black, etc)', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 100, portionUnit: 'g' },
     { name: 'Lentils', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 100, portionUnit: 'g' },
+    { name: 'Baked Beans', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 100, portionUnit: 'g' },
+    { name: 'Mushy Peas', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 100, portionUnit: 'g' },
+    { name: 'Chickpeas', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 100, portionUnit: 'g' },
+    { name: 'Butter Beans', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 100, portionUnit: 'g' },
+    { name: 'Cannellini Beans', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 100, portionUnit: 'g' },
+    { name: 'Garden Peas', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'carbs', portionSize: 80, portionUnit: 'g' },
 
     // Speed Foods - Vegetables
     { name: 'Broccoli', synValue: 0, isFreeFood: true, isSpeedFood: true, category: 'vegetables', portionSize: 80, portionUnit: 'g' },
@@ -373,8 +426,14 @@ const seedDatabase = async (client: pg.PoolClient) => {
     { name: 'Ice Cream', synValue: 4, isFreeFood: false, isSpeedFood: false, category: 'desserts', portionSize: 1, portionUnit: 'scoop' },
     { name: 'Cake (sponge)', synValue: 10, isFreeFood: false, isSpeedFood: false, category: 'desserts', portionSize: 1, portionUnit: 'slice' },
 
-    // Low Syn Options
-    { name: 'Fat Free Yogurt', synValue: 0.5, isFreeFood: false, isSpeedFood: false, category: 'dairy', portionSize: 100, portionUnit: 'g' },
+    // Fruit Juice and Smoothies (NOT free - count as Syns per Slimming World rules)
+    { name: 'Orange Juice', synValue: 2.5, isFreeFood: false, isSpeedFood: false, category: 'drinks', portionSize: 150, portionUnit: 'ml' },
+    { name: 'Apple Juice', synValue: 2.5, isFreeFood: false, isSpeedFood: false, category: 'drinks', portionSize: 150, portionUnit: 'ml' },
+    { name: 'Fruit Smoothie', synValue: 4, isFreeFood: false, isSpeedFood: false, category: 'drinks', portionSize: 200, portionUnit: 'ml' },
+    { name: 'Fruit Puree', synValue: 2, isFreeFood: false, isSpeedFood: false, category: 'snacks', portionSize: 100, portionUnit: 'g' },
+
+    // Low Syn Options (note: plain fat-free yogurt is FREE - see Fat-free Dairy section above)
+    { name: 'Fat Free Flavoured Yogurt', synValue: 0.5, isFreeFood: false, isSpeedFood: false, category: 'dairy', portionSize: 100, portionUnit: 'g' },
     { name: 'Low Calorie Cooking Spray', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'oils', portionSize: 5, portionUnit: 'sprays' },
     { name: 'Diet Coke', synValue: 0, isFreeFood: true, isSpeedFood: false, category: 'drinks', portionSize: 330, portionUnit: 'ml' },
   ];
