@@ -83,8 +83,11 @@ export const isFreeFood = (nutrition: NutritionalInfo, foodName: string): boolea
     'pork tenderloin', 'pork fillet', 'lean pork', 'ham', 'gammon', 'lean lamb',
     'venison', 'rabbit', 'pheasant', 'duck breast',
 
-    // Fat-free dairy
+    // Fat-free dairy (handles both 'yogurt' and 'yoghurt' spellings)
     'fat-free yogurt', 'fat free yogurt', 'fat-free natural yogurt', 'fat free natural yogurt',
+    'fat-free yoghurt', 'fat free yoghurt', 'fat-free natural yoghurt', 'fat free natural yoghurt',
+    'fat free greek yogurt', 'fat-free greek yogurt', 'fat free greek yoghurt', 'fat-free greek yoghurt',
+    'fat free authentic greek', '0% fat yogurt', '0% fat yoghurt', '0% yogurt', '0% yoghurt',
     'skyr', 'plain quark', 'quark', 'fat-free fromage frais', 'fat free fromage frais',
     'soya yogurt', 'soya yoghurt', 'plain soya',
 
