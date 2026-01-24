@@ -50,10 +50,25 @@ const WeightTracker = () => {
     loadWeightLogs();
   }, []);
 
+  // Sync profile currentWeight with most recent weight log entry on load
+  useEffect(() => {
+    const syncProfileWeight = async () => {
+      if (weightLogs.length > 0 && profile && !isLoading) {
+        const mostRecentWeight = weightLogs[0].weight;
+        // Compare with a small tolerance for floating point differences
+        if (Math.abs(mostRecentWeight - (profile.currentWeight || 0)) > 0.01) {
+          await updateProfile({ currentWeight: mostRecentWeight });
+        }
+      }
+    };
+    syncProfileWeight();
+  }, [weightLogs, profile, isLoading]);
+
   const loadWeightLogs = async () => {
     try {
       const response = await weightAPI.getAll();
-      setWeightLogs(response.data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      const sortedLogs = response.data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setWeightLogs(sortedLogs);
     } catch (error) {
       console.error('Failed to load weight logs:', error);
     } finally {
