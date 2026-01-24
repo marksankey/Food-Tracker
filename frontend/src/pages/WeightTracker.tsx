@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
-import { weightAPI } from '../services/api';
-import { WeightLog } from '../types';
+import { weightAPI, authAPI } from '../services/api';
+import { WeightLog, UserProfile } from '../types';
 import { format } from 'date-fns';
-import { useAuth } from '../store/AuthContext';
 import './WeightTracker.css';
 
 const WeightTracker = () => {
-  const { profile, updateProfile } = useAuth();
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [weight, setWeight] = useState<number>(0);
@@ -47,16 +46,32 @@ const WeightTracker = () => {
   };
 
   useEffect(() => {
-    loadWeightLogs();
+    loadData();
   }, []);
 
-  const loadWeightLogs = async () => {
+  const loadData = async () => {
     try {
-      const response = await weightAPI.getAll();
-      const sortedLogs = response.data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const [weightResponse, profileResponse] = await Promise.all([
+        weightAPI.getAll(),
+        authAPI.getProfile()
+      ]);
+      const sortedLogs = weightResponse.data.sort((a: WeightLog, b: WeightLog) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
       setWeightLogs(sortedLogs);
+      setProfile(profileResponse.data.profile);
+
+      // Sync profile currentWeight with most recent weight log if they differ
+      if (sortedLogs.length > 0) {
+        const mostRecentWeight = sortedLogs[0].weight;
+        const currentProfileWeight = profileResponse.data.profile?.currentWeight || 0;
+        if (Math.abs(mostRecentWeight - currentProfileWeight) > 0.01) {
+          const updateResponse = await authAPI.updateProfile({ currentWeight: mostRecentWeight });
+          setProfile(updateResponse.data);
+        }
+      }
     } catch (error) {
-      console.error('Failed to load weight logs:', error);
+      console.error('Failed to load data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +91,8 @@ const WeightTracker = () => {
       // Only update if this is the most recent entry (date >= all existing dates)
       const isLatestEntry = weightLogs.length === 0 || date >= weightLogs[0].date;
       if (isLatestEntry) {
-        await updateProfile({ currentWeight: weightInKg });
+        const updateResponse = await authAPI.updateProfile({ currentWeight: weightInKg });
+        setProfile(updateResponse.data);
       }
 
       setShowAddModal(false);
@@ -86,7 +102,7 @@ const WeightTracker = () => {
       setNotes('');
       setDate(format(new Date(), 'yyyy-MM-dd'));
       setInputUnit('metric'); // Reset to metric
-      loadWeightLogs();
+      loadData();
     } catch (error) {
       console.error('Failed to add weight log:', error);
     }
@@ -101,14 +117,14 @@ const WeightTracker = () => {
       // If we deleted the most recent entry, update profile with the new most recent weight
       const deletedEntry = weightLogs.find(log => log.id === id);
       if (deletedEntry && weightLogs.length > 0 && deletedEntry.date === weightLogs[0].date) {
-        // Get the next most recent entry after deletion
         const remainingLogs = weightLogs.filter(log => log.id !== id);
         if (remainingLogs.length > 0) {
-          await updateProfile({ currentWeight: remainingLogs[0].weight });
+          const updateResponse = await authAPI.updateProfile({ currentWeight: remainingLogs[0].weight });
+          setProfile(updateResponse.data);
         }
       }
 
-      loadWeightLogs();
+      loadData();
     } catch (error) {
       console.error('Failed to delete weight log:', error);
     }
@@ -131,7 +147,6 @@ const WeightTracker = () => {
     const latest = weightLogs[0].weight;
     // Use profile's startingWeight if available, otherwise use oldest weight log entry
     const starting = profile?.startingWeight || weightLogs[weightLogs.length - 1].weight;
-    // Only show total loss if we have a starting weight to compare against
     if (!starting || starting === latest) return null;
     return starting - latest;
   };
