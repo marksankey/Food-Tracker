@@ -1,13 +1,24 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { foodAPI } from '../services/api';
 import { Food } from '../types';
 import ProductSearch from '../components/ProductSearch';
 import './FoodDatabase.css';
 
+interface LocationState {
+  searchQuery?: string;
+  fromDiary?: boolean;
+}
+
 const FoodDatabase = () => {
-  const [activeTab, setActiveTab] = useState<'myFoods' | 'searchProducts'>('myFoods');
+  const location = useLocation();
+  const locationState = location.state as LocationState | null;
+
+  const [activeTab, setActiveTab] = useState<'myFoods' | 'searchProducts'>(
+    locationState?.fromDiary ? 'searchProducts' : 'myFoods'
+  );
   const [foods, setFoods] = useState<Food[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(locationState?.searchQuery || '');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);

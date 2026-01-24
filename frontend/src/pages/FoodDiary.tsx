@@ -171,7 +171,11 @@ const FoodDiary = () => {
               />
               <p className="search-help">
                 Can't find what you're looking for?{' '}
-                <Link to="/foods" className="search-database-link">
+                <Link
+                  to="/foods"
+                  state={{ searchQuery, fromDiary: true }}
+                  className="search-database-link"
+                >
                   Search Food Database
                 </Link>
               </p>
