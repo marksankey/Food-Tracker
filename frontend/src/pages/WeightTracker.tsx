@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { weightAPI } from '../services/api';
 import { WeightLog } from '../types';
 import { format } from 'date-fns';
@@ -17,6 +17,7 @@ const WeightTracker = () => {
   const [inputUnit, setInputUnit] = useState<'metric' | 'imperial'>('metric');
   const [stones, setStones] = useState<number>(0);
   const [pounds, setPounds] = useState<number>(0);
+  const hasSyncedProfile = useRef(false);
 
   // Conversion helpers
   const kgToStonesPounds = (kg: number) => {
@@ -50,19 +51,21 @@ const WeightTracker = () => {
     loadWeightLogs();
   }, []);
 
-  // Sync profile currentWeight with most recent weight log entry on load
+  // Sync profile currentWeight with most recent weight log entry on load (once)
   useEffect(() => {
     const syncProfileWeight = async () => {
+      if (hasSyncedProfile.current) return;
       if (weightLogs.length > 0 && profile && !isLoading) {
         const mostRecentWeight = weightLogs[0].weight;
         // Compare with a small tolerance for floating point differences
         if (Math.abs(mostRecentWeight - (profile.currentWeight || 0)) > 0.01) {
+          hasSyncedProfile.current = true;
           await updateProfile({ currentWeight: mostRecentWeight });
         }
       }
     };
     syncProfileWeight();
-  }, [weightLogs, profile, isLoading]);
+  }, [weightLogs, profile, isLoading, updateProfile]);
 
   const loadWeightLogs = async () => {
     try {
