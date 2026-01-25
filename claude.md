@@ -169,9 +169,11 @@ npm run preview      # Test production build
 
 ### Food Diary
 - Organized by meal type (breakfast, lunch, dinner, snacks)
-- Date-based filtering
+- Date-based filtering with responsive date navigator
 - Real-time syn calculation
-- Quick add from food database
+- Dynamic food search with instant filtering as you type
+- Quick add from food database with direct "Add to Food Diary" from search results
+- Search term retained when switching between tabs
 - Edit/delete existing entries
 
 ### Dashboard
@@ -183,17 +185,35 @@ npm run preview      # Test production build
 ### Weight Tracker
 - Log weight entries with dates
 - Line chart visualization
-- Progress calculation
+- Progress calculation with Last Change and Total Loss metrics
+- Automatic sync with user profile (currentWeight updates from latest entry)
 - BMI calculation (if height provided)
+- Support for stones and pounds (imperial) format
 
 ## Important Notes
 
 ### Recent Changes
-**2026-01-23**: Database connection error handling and diagnostics
+**2026-01-25**: Mobile layout and food search improvements
+- Fixed mobile tab layout with reduced padding/font-size for better visibility
+- Added responsive styles for date navigator with proper button sizing
+- Added dynamic food search with real-time filtering in Food Diary
+- Added direct 'Add to Food Diary' button from product search results
+- Related PRs: #55, #56, #57
+
+**2026-01-24**: Weight tracker profile synchronization
+- Fixed weight tracker to sync with user profile using direct API calls
+- Profile currentWeight now syncs automatically with most recent weight entry
+- Uses profile startingWeight for Last Change and Total Loss calculations
+- Fixed infinite loop and loading issues in profile sync
+- Related PRs: #50, #51, #52, #53, #54
+
+**2026-01-23**: Search term retention and database connection improvements
+- Retain search term when switching food search tabs
+- Pass search term from Food Diary to Food Database with UK Products tab default
 - Added comprehensive DATABASE_URL validation on startup
 - Improved error messages with specific guidance for common issues (DNS, auth, timeouts)
 - Added connection retry with exponential backoff for transient failures
-- Related PRs: #43, #44
+- Related PRs: #43, #44, #48, #49
 
 **2026-01-22**: Deployment infrastructure improvements
 - Updated deployment guide to use Supabase for PostgreSQL hosting
@@ -386,7 +406,7 @@ Create test users with different scenarios:
 - Branch names must start with 'claude/' and include session ID for push to succeed
 
 ### Current Development Branch
-- Working branch: `claude/update-claude-md-S9EpI`
+- Working branch: `claude/update-claude-B7k4W`
 - Purpose: Update documentation to reflect recent changes
 
 ## Contact & Resources
