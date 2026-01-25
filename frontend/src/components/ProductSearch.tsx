@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { productsAPI, Product } from '../services/api';
+import { productsAPI, diaryAPI, Product } from '../services/api';
+import { format } from 'date-fns';
 import BarcodeScanner from './BarcodeScanner';
 import './ProductSearch.css';
 
@@ -8,6 +9,14 @@ interface ProductSearchProps {
   searchQuery?: string;
   onSearchQueryChange?: (query: string) => void;
 }
+
+// Helper function to get default meal based on current time
+const getDefaultMeal = (): 'breakfast' | 'lunch' | 'dinner' | 'snacks' => {
+  const hour = new Date().getHours();
+  if (hour < 10) return 'breakfast';
+  if (hour < 14) return 'lunch';
+  return 'dinner';
+};
 
 const ProductSearch = ({ onProductSaved, searchQuery: externalSearchQuery, onSearchQueryChange }: ProductSearchProps) => {
   const [searchType, setSearchType] = useState<'name' | 'barcode'>('name');
@@ -21,6 +30,14 @@ const ProductSearch = ({ onProductSaved, searchQuery: externalSearchQuery, onSea
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showScanner, setShowScanner] = useState(false);
+
+  // Add to diary modal state
+  const [showDiaryModal, setShowDiaryModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [diaryQuantity, setDiaryQuantity] = useState(1);
+  const [diaryMeal, setDiaryMeal] = useState<'breakfast' | 'lunch' | 'dinner' | 'snacks'>(getDefaultMeal());
+  const [diaryDate, setDiaryDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [isAddingToDiary, setIsAddingToDiary] = useState(false);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -47,24 +64,60 @@ const ProductSearch = ({ onProductSaved, searchQuery: externalSearchQuery, onSea
     }
   };
 
-  const handleSaveProduct = async (product: Product) => {
+  const openDiaryModal = (product: Product) => {
+    setSelectedProduct(product);
+    setDiaryQuantity(1);
+    setDiaryMeal(getDefaultMeal());
+    setDiaryDate(format(new Date(), 'yyyy-MM-dd'));
+    setShowDiaryModal(true);
+  };
+
+  const closeDiaryModal = () => {
+    setShowDiaryModal(false);
+    setSelectedProduct(null);
+  };
+
+  const handleAddToDiary = async () => {
+    if (!selectedProduct) return;
+
+    setIsAddingToDiary(true);
+    setError('');
+    setSuccess('');
+
     try {
-      setSuccess('');
-      setError('');
-      await productsAPI.saveProduct({
-        barcode: product.barcode,
-        name: product.name,
-        synValue: product.synValue,
-        isFree: product.isFreeFood,
-        isSpeed: product.isSpeedFood,
-        servingSize: product.servingSize
+      // First, save the product to My Foods
+      const savedFood = await productsAPI.saveProduct({
+        barcode: selectedProduct.barcode,
+        name: selectedProduct.name,
+        synValue: selectedProduct.synValue,
+        isFree: selectedProduct.isFreeFood,
+        isSpeed: selectedProduct.isSpeedFood,
+        servingSize: selectedProduct.servingSize
       });
-      setSuccess(`"${product.name}" saved to your food database!`);
+
+      // Calculate syn value based on quantity
+      const synValue = selectedProduct.isFreeFood ? 0 : selectedProduct.synValue * diaryQuantity;
+
+      // Then add to the food diary
+      await diaryAPI.addEntry({
+        date: diaryDate,
+        mealType: diaryMeal,
+        foodId: savedFood.data.id,
+        quantity: diaryQuantity,
+        synValueConsumed: synValue,
+        isHealthyExtra: false,
+      });
+
+      setSuccess(`"${selectedProduct.name}" added to your ${diaryMeal}!`);
+      closeDiaryModal();
+
       if (onProductSaved) {
         onProductSaved();
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save product');
+      setError(err.response?.data?.message || 'Failed to add to diary');
+    } finally {
+      setIsAddingToDiary(false);
     }
   };
 
@@ -173,10 +226,10 @@ const ProductSearch = ({ onProductSaved, searchQuery: externalSearchQuery, onSea
                   </div>
                 </div>
                 <button
-                  onClick={() => handleSaveProduct(product)}
+                  onClick={() => openDiaryModal(product)}
                   className="btn btn-primary btn-save"
                 >
-                  Save to My Foods
+                  Add to Food Diary
                 </button>
               </div>
             </div>
@@ -196,6 +249,133 @@ const ProductSearch = ({ onProductSaved, searchQuery: externalSearchQuery, onSea
           onScan={handleBarcodeScanned}
           onClose={() => setShowScanner(false)}
         />
+      )}
+
+      {showDiaryModal && selectedProduct && (
+        <div className="diary-modal-overlay" onClick={closeDiaryModal}>
+          <div className="diary-modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Add to Food Diary</h2>
+
+            <div className="diary-modal-food-info">
+              <h3>{selectedProduct.name}</h3>
+              <div className="diary-modal-syns">
+                {selectedProduct.isFreeFood ? (
+                  <span className="free-food-label">Free Food</span>
+                ) : (
+                  <>
+                    <span className="syn-value">{selectedProduct.synValue}</span>
+                    <span className="syn-label">syns per {selectedProduct.servingSize}</span>
+                  </>
+                )}
+              </div>
+              {selectedProduct.isFreeFood && (
+                <p className="free-food-description">
+                  This is a Free Food, which doesn't need to be counted, measured or weighed.
+                  You can enjoy as much Free Food as you like!
+                </p>
+              )}
+            </div>
+
+            <div className="diary-modal-form">
+              <div className="form-group">
+                <label>Quantity</label>
+                <div className="quantity-selector">
+                  <button
+                    type="button"
+                    className="qty-btn"
+                    onClick={() => setDiaryQuantity(Math.max(0.5, diaryQuantity - 0.5))}
+                  >
+                    −
+                  </button>
+                  <span className="qty-value">
+                    {selectedProduct.isFreeFood ? 'Unlimited' : diaryQuantity}
+                  </span>
+                  <button
+                    type="button"
+                    className="qty-btn"
+                    onClick={() => setDiaryQuantity(diaryQuantity + 0.5)}
+                    disabled={selectedProduct.isFreeFood}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Meal</label>
+                <div className="meal-selector">
+                  <button
+                    type="button"
+                    className="meal-nav-btn"
+                    onClick={() => {
+                      const meals: ('breakfast' | 'lunch' | 'dinner' | 'snacks')[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
+                      const currentIndex = meals.indexOf(diaryMeal);
+                      setDiaryMeal(meals[(currentIndex - 1 + meals.length) % meals.length]);
+                    }}
+                  >
+                    ‹
+                  </button>
+                  <span className="meal-value">{diaryMeal.charAt(0).toUpperCase() + diaryMeal.slice(1)}</span>
+                  <button
+                    type="button"
+                    className="meal-nav-btn"
+                    onClick={() => {
+                      const meals: ('breakfast' | 'lunch' | 'dinner' | 'snacks')[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
+                      const currentIndex = meals.indexOf(diaryMeal);
+                      setDiaryMeal(meals[(currentIndex + 1) % meals.length]);
+                    }}
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Date</label>
+                <div className="date-selector">
+                  <button
+                    type="button"
+                    className="date-nav-btn"
+                    onClick={() => {
+                      const date = new Date(diaryDate);
+                      date.setDate(date.getDate() - 1);
+                      setDiaryDate(format(date, 'yyyy-MM-dd'));
+                    }}
+                  >
+                    ‹
+                  </button>
+                  <span className="date-value">
+                    {format(new Date(diaryDate), 'EEEE, d MMM yyyy')}
+                  </span>
+                  <button
+                    type="button"
+                    className="date-nav-btn"
+                    onClick={() => {
+                      const date = new Date(diaryDate);
+                      date.setDate(date.getDate() + 1);
+                      setDiaryDate(format(date, 'yyyy-MM-dd'));
+                    }}
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="diary-modal-actions">
+              <button
+                onClick={handleAddToDiary}
+                className="btn btn-add-diary"
+                disabled={isAddingToDiary}
+              >
+                {isAddingToDiary ? 'Adding...' : 'Add to Planner'}
+              </button>
+              <button onClick={closeDiaryModal} className="btn btn-cancel">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
