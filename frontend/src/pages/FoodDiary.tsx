@@ -65,6 +65,7 @@ const FoodDiary = () => {
       setSelectedFood('');
       setQuantity(1);
       setIsHealthyExtra(false);
+      setSearchQuery('');
       loadEntries();
     } catch (error) {
       console.error('Failed to add entry:', error);
@@ -158,7 +159,7 @@ const FoodDiary = () => {
       )}
 
       {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+        <div className="modal-overlay" onClick={() => { setShowAddModal(false); setSearchQuery(''); setSelectedFood(''); }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Add Food to {selectedMeal}</h2>
             <div className="form-group">
@@ -182,14 +183,49 @@ const FoodDiary = () => {
             </div>
             <div className="form-group">
               <label>Select Food</label>
-              <select value={selectedFood} onChange={(e) => setSelectedFood(e.target.value)}>
-                <option value="">Choose a food...</option>
-                {filteredFoods.map((food) => (
-                  <option key={food.id} value={food.id}>
-                    {food.name} ({food.synValue} syns per {food.portionSize} {food.portionUnit})
-                  </option>
-                ))}
-              </select>
+              {selectedFood ? (
+                <div className="selected-food-display">
+                  <span className="selected-food-name">
+                    {foods.find((f) => f.id === selectedFood)?.name}
+                  </span>
+                  <span className="selected-food-details">
+                    {foods.find((f) => f.id === selectedFood)?.synValue} syns per{' '}
+                    {foods.find((f) => f.id === selectedFood)?.portionSize}{' '}
+                    {foods.find((f) => f.id === selectedFood)?.portionUnit}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn-clear-selection"
+                    onClick={() => setSelectedFood('')}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <div className="food-search-results">
+                  {searchQuery.length === 0 ? (
+                    <p className="search-prompt">Start typing to search your foods...</p>
+                  ) : filteredFoods.length === 0 ? (
+                    <p className="no-results">No foods found matching "{searchQuery}"</p>
+                  ) : (
+                    <ul className="food-list">
+                      {filteredFoods.map((food) => (
+                        <li
+                          key={food.id}
+                          className="food-list-item"
+                          onClick={() => setSelectedFood(food.id)}
+                        >
+                          <span className="food-item-name">{food.name}</span>
+                          <span className="food-item-details">
+                            {food.isFreeFood ? 'Free' : `${food.synValue} syns`} per {food.portionSize}{' '}
+                            {food.portionUnit}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
             <div className="form-group">
               <label>Quantity</label>
@@ -212,7 +248,7 @@ const FoodDiary = () => {
               </label>
             </div>
             <div className="modal-actions">
-              <button onClick={() => setShowAddModal(false)} className="btn btn-secondary">
+              <button onClick={() => { setShowAddModal(false); setSearchQuery(''); setSelectedFood(''); }} className="btn btn-secondary">
                 Cancel
               </button>
               <button onClick={handleAddEntry} className="btn btn-primary" disabled={!selectedFood}>
