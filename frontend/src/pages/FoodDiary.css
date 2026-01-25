@@ -9,15 +9,42 @@
 .date-navigator {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 10px;
   justify-content: center;
+  padding: 0 10px;
+}
+
+.date-navigator .btn {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  font-size: 0.875rem;
 }
 
 .current-date {
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 500;
-  min-width: 250px;
   text-align: center;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Tablet and larger screens */
+@media (min-width: 768px) {
+  .date-navigator {
+    gap: 20px;
+    padding: 0;
+  }
+
+  .date-navigator .btn {
+    padding: 12px 20px;
+    font-size: 1rem;
+  }
+
+  .current-date {
+    font-size: 1.2rem;
+    min-width: 250px;
+    flex: none;
+  }
 }
 
 .meal-section {
