@@ -8,7 +8,10 @@ This is a comprehensive food tracking application based on Slimming World princi
 - **Syn Tracking**: Default 15 syns/day (customizable)
 - **Free Foods**: Foods with 0 syns
 - **Speed Foods**: Fruits and vegetables (aim for 1/3 of each meal)
-- **Healthy Extras**: Track A (dairy) and B (fiber) allowances
+- **Healthy Extras**: Track three allowance types:
+  - **A (Calcium)**: Dairy products like milk, cheese
+  - **B (Fibre)**: Fiber-rich foods like bread, cereals
+  - **C (Healthy Fats)**: Nuts, seeds, avocado, olives, oils
 
 ## Technical Stack
 
@@ -69,9 +72,9 @@ Food-Tracker/
 
 ### Core Tables
 1. **users**: User accounts (id, username, email, password_hash)
-2. **user_profiles**: Health data (syn_allowance, starting_weight, target_weight, height)
+2. **user_profiles**: Health data (syn_allowance, starting_weight, target_weight, height, healthy_extra_a/b/c_allowance)
 3. **foods**: Food database (name, category, syns, portion_size, is_free_food, is_speed_food, healthy_extra_type)
-4. **food_diary**: Meal entries (user_id, food_id, meal_type, date, quantity)
+4. **food_diary**: Meal entries (user_id, food_id, meal_type, date, quantity, healthy_extra_type)
 5. **weight_logs**: Weight tracking (user_id, weight, date, notes)
 
 ### Key Relationships
@@ -170,17 +173,18 @@ npm run preview      # Test production build
 ### Food Diary
 - Organized by meal type (breakfast, lunch, dinner, snacks)
 - Date-based filtering with responsive date navigator
-- Real-time syn calculation
+- Real-time syn calculation (excludes items marked as healthy extras)
 - Dynamic food search with instant filtering as you type
 - Quick add from food database with direct "Add to Food Diary" from search results
 - Search term retained when switching between tabs
+- Healthy extra type selection when adding foods (A, B, or C)
 - Edit/delete existing entries
 
 ### Dashboard
 - Daily syn counter with visual progress
 - Today's meals overview
 - Quick navigation
-- Healthy extras tracking
+- Healthy extras tracking (all three types: Calcium, Fibre, Healthy Fats with counts)
 
 ### Weight Tracker
 - Log weight entries with dates
@@ -193,6 +197,16 @@ npm run preview      # Test production build
 ## Important Notes
 
 ### Recent Changes
+**2026-01-28**: Third healthy extra type and syn calculation fix
+- Added Healthy Extra C (Healthy Fats) for nuts, seeds, avocado, olives, and oils
+- Fixed syn calculation to not count syns for items marked as healthy extras
+- Updated Dashboard to show all three healthy extra types with counts
+- Updated Food Diary to allow selecting which healthy extra type when adding food
+- Updated Profile settings to manage all three healthy extra allowances
+- Added seed data for healthy fats foods (almonds, walnuts, avocado, oils, etc.)
+- Renamed labels to match Slimming World terminology (Calcium, Fibre, Healthy Fats)
+- Related PRs: #59
+
 **2026-01-25**: Mobile layout and food search improvements
 - Fixed mobile tab layout with reduced padding/font-size for better visibility
 - Added responsive styles for date navigator with proper button sizing
@@ -406,8 +420,8 @@ Create test users with different scenarios:
 - Branch names must start with 'claude/' and include session ID for push to succeed
 
 ### Current Development Branch
-- Working branch: `claude/update-claude-B7k4W`
-- Purpose: Update documentation to reflect recent changes
+- Working branch: `claude/update-claude-md-L7v3L`
+- Purpose: Update documentation to reflect recent changes (Healthy Extra C feature)
 
 ## Contact & Resources
 
