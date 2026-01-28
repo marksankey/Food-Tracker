@@ -287,3 +287,54 @@
   background: #ffebee;
   color: #d32f2f;
 }
+
+/* Healthy Extra Select */
+.healthy-extra-select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+}
+
+.healthy-extra-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.healthy-extra-info {
+  margin-top: 8px;
+  margin-bottom: 0;
+  font-size: 0.85rem;
+  color: #28a745;
+  font-style: italic;
+}
+
+/* Healthy Extra Badges */
+.badge-extra {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  border-radius: 10px;
+  font-weight: 600;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge-extra-a {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.badge-extra-b {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.badge-extra-c {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}

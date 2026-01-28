@@ -200,8 +200,20 @@ export const initializeDatabase = async () => {
         daily_syn_allowance INTEGER NOT NULL DEFAULT 15,
         healthy_extra_a_allowance INTEGER NOT NULL DEFAULT 1,
         healthy_extra_b_allowance INTEGER NOT NULL DEFAULT 1,
+        healthy_extra_c_allowance INTEGER NOT NULL DEFAULT 1,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
+    `);
+
+    // Add healthy_extra_c_allowance column if it doesn't exist (migration for existing databases)
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                       WHERE table_name = 'user_profiles' AND column_name = 'healthy_extra_c_allowance') THEN
+          ALTER TABLE user_profiles ADD COLUMN healthy_extra_c_allowance INTEGER NOT NULL DEFAULT 1;
+        END IF;
+      END $$;
     `);
 
     // Foods table
@@ -233,10 +245,22 @@ export const initializeDatabase = async () => {
         quantity REAL NOT NULL DEFAULT 1,
         syn_value_consumed REAL NOT NULL DEFAULT 0,
         is_healthy_extra INTEGER NOT NULL DEFAULT 0,
+        healthy_extra_type TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE
       )
+    `);
+
+    // Add healthy_extra_type column if it doesn't exist (migration for existing databases)
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                       WHERE table_name = 'food_diary' AND column_name = 'healthy_extra_type') THEN
+          ALTER TABLE food_diary ADD COLUMN healthy_extra_type TEXT;
+        END IF;
+      END $$;
     `);
 
     // Weight Logs table
@@ -285,7 +309,7 @@ export const initializeDatabase = async () => {
         [defaultUserId, 'default@local', 'not-needed', 'My Food Tracker']
       );
       await client.query(
-        'INSERT INTO user_profiles (id, user_id, starting_weight, current_weight, target_weight, daily_syn_allowance, healthy_extra_a_allowance, healthy_extra_b_allowance) VALUES ($1, $2, 0, 0, 0, 15, 1, 1)',
+        'INSERT INTO user_profiles (id, user_id, starting_weight, current_weight, target_weight, daily_syn_allowance, healthy_extra_a_allowance, healthy_extra_b_allowance, healthy_extra_c_allowance) VALUES ($1, $2, 0, 0, 0, 15, 1, 1, 1)',
         [uuidv4(), defaultUserId]
       );
     }
@@ -404,11 +428,33 @@ const seedDatabase = async (client: pg.PoolClient) => {
     { name: 'Cheddar Cheese (reduced fat)', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'A', category: 'dairy', portionSize: 30, portionUnit: 'g' },
     { name: 'Cottage Cheese', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'A', category: 'dairy', portionSize: 120, portionUnit: 'g' },
 
-    // Healthy Extra B (Fiber)
+    // Healthy Extra B (Fibre)
     { name: 'Wholemeal Bread', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'B', category: 'bread', portionSize: 2, portionUnit: 'slices' },
     { name: 'Weetabix', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'B', category: 'cereal', portionSize: 2, portionUnit: 'biscuits' },
     { name: 'Porridge Oats', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'B', category: 'cereal', portionSize: 35, portionUnit: 'g' },
     { name: 'All-Bran', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'B', category: 'cereal', portionSize: 40, portionUnit: 'g' },
+    { name: 'Shredded Wheat', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'B', category: 'cereal', portionSize: 2, portionUnit: 'biscuits' },
+    { name: 'Ryvita Crispbread', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'B', category: 'bread', portionSize: 4, portionUnit: 'slices' },
+    { name: 'Canned Fruit in Juice', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'B', category: 'fruit', portionSize: 200, portionUnit: 'g' },
+    { name: 'Dried Apricots', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'B', category: 'fruit', portionSize: 30, portionUnit: 'g' },
+    { name: 'Alpen Light Cereal Bar', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'B', category: 'snacks', portionSize: 2, portionUnit: 'bars' },
+
+    // Healthy Extra C (Healthy Fats)
+    { name: 'Almonds', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'nuts', portionSize: 25, portionUnit: 'g' },
+    { name: 'Cashew Nuts', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'nuts', portionSize: 25, portionUnit: 'g' },
+    { name: 'Walnuts', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'nuts', portionSize: 25, portionUnit: 'g' },
+    { name: 'Brazil Nuts', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'nuts', portionSize: 20, portionUnit: 'g' },
+    { name: 'Peanuts (unsalted)', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'nuts', portionSize: 25, portionUnit: 'g' },
+    { name: 'Mixed Nuts (unsalted)', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'nuts', portionSize: 25, portionUnit: 'g' },
+    { name: 'Sunflower Seeds', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'nuts', portionSize: 25, portionUnit: 'g' },
+    { name: 'Pumpkin Seeds', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'nuts', portionSize: 25, portionUnit: 'g' },
+    { name: 'Chia Seeds', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'nuts', portionSize: 25, portionUnit: 'g' },
+    { name: 'Flaxseeds', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'nuts', portionSize: 25, portionUnit: 'g' },
+    { name: 'Avocado', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'fruit', portionSize: 60, portionUnit: 'g' },
+    { name: 'Olives', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'vegetables', portionSize: 28, portionUnit: 'g' },
+    { name: 'Extra Virgin Olive Oil', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'oils', portionSize: 1, portionUnit: 'tbsp' },
+    { name: 'Rapeseed Oil', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'oils', portionSize: 1, portionUnit: 'tbsp' },
+    { name: 'Flaxseed Oil', synValue: 0, isFreeFood: false, isSpeedFood: false, healthyExtraType: 'C', category: 'oils', portionSize: 1, portionUnit: 'tbsp' },
 
     // Syn Foods - Common Items
     { name: 'Chocolate Bar', synValue: 12, isFreeFood: false, isSpeedFood: false, category: 'snacks', portionSize: 50, portionUnit: 'g' },

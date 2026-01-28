@@ -14,6 +14,7 @@ export interface UserProfile {
   dailySynAllowance: number;
   healthyExtraAAllowance: number;
   healthyExtraBAllowance: number;
+  healthyExtraCAllowance: number;
 }
 
 export interface Food {
@@ -22,7 +23,7 @@ export interface Food {
   synValue: number;
   isFreeFood: boolean;
   isSpeedFood: boolean;
-  healthyExtraType?: 'A' | 'B';
+  healthyExtraType?: 'A' | 'B' | 'C';
   portionSize: number;
   portionUnit: string;
   category: string;
@@ -39,6 +40,7 @@ export interface FoodDiaryEntry {
   quantity: number;
   synValueConsumed: number;
   isHealthyExtra: boolean;
+  healthyExtraType?: 'A' | 'B' | 'C';
 }
 
 export interface WeightLog {
@@ -55,6 +57,10 @@ export interface DailySummary {
   remainingSyns: number;
   healthyExtraAUsed: boolean;
   healthyExtraBUsed: boolean;
+  healthyExtraCUsed: boolean;
+  healthyExtraACount: number;
+  healthyExtraBCount: number;
+  healthyExtraCCount: number;
   speedFoodsCount: number;
   entries: FoodDiaryEntry[];
 }

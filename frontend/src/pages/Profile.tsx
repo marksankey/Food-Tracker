@@ -13,6 +13,7 @@ const Profile = () => {
     dailySynAllowance: 15,
     healthyExtraAAllowance: 1,
     healthyExtraBAllowance: 1,
+    healthyExtraCAllowance: 1,
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -63,6 +64,7 @@ const Profile = () => {
         dailySynAllowance: loadedProfile.dailySynAllowance,
         healthyExtraAAllowance: loadedProfile.healthyExtraAAllowance,
         healthyExtraBAllowance: loadedProfile.healthyExtraBAllowance,
+        healthyExtraCAllowance: loadedProfile.healthyExtraCAllowance || 1,
       });
       setIsEditing(!loadedProfile.startingWeight);
     } catch (error) {
@@ -314,7 +316,7 @@ const Profile = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Healthy Extra A Allowance</label>
+                <label>Calcium Allowance (per day)</label>
                 <input
                   type="number"
                   min="1"
@@ -325,13 +327,24 @@ const Profile = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Healthy Extra B Allowance</label>
+                <label>Fibre Allowance (per day)</label>
                 <input
                   type="number"
                   min="1"
                   max="2"
                   value={formData.healthyExtraBAllowance}
                   onChange={(e) => handleChange('healthyExtraBAllowance', parseInt(e.target.value))}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Healthy Fats Allowance (per day)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="2"
+                  value={formData.healthyExtraCAllowance}
+                  onChange={(e) => handleChange('healthyExtraCAllowance', parseInt(e.target.value))}
                   required
                 />
               </div>
@@ -418,12 +431,16 @@ const Profile = () => {
                 <span className="info-value">{formData.dailySynAllowance} syns</span>
               </div>
               <div className="info-item">
-                <span className="info-label">Healthy Extra A:</span>
+                <span className="info-label">Calcium (HE-A):</span>
                 <span className="info-value">{formData.healthyExtraAAllowance} per day</span>
               </div>
               <div className="info-item">
-                <span className="info-label">Healthy Extra B:</span>
+                <span className="info-label">Fibre (HE-B):</span>
                 <span className="info-value">{formData.healthyExtraBAllowance} per day</span>
+              </div>
+              <div className="info-item">
+                <span className="info-label">Healthy Fats (HE-C):</span>
+                <span className="info-value">{formData.healthyExtraCAllowance} per day</span>
               </div>
             </div>
           </div>

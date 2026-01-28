@@ -47,7 +47,8 @@ export const createDiaryEntry = async (req: AuthRequest, res: Response) => {
       food_id: req.body.foodId,
       quantity: req.body.quantity,
       syn_value_consumed: req.body.synValueConsumed,
-      is_healthy_extra: req.body.isHealthyExtra ? 1 : 0
+      is_healthy_extra: req.body.isHealthyExtra ? 1 : 0,
+      healthy_extra_type: req.body.healthyExtraType || null
     };
 
     const entry = await DiaryModel.create(req.userId!, entryData);
