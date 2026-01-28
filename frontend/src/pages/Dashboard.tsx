@@ -91,17 +91,32 @@ const Dashboard = () => {
 
         <div className="card healthy-extras">
           <h2>Healthy Extras</h2>
-          <div className="extras-grid">
+          <div className="extras-grid extras-grid-3">
             <div className={`extra-item ${summary?.healthyExtraAUsed ? 'used' : ''}`}>
-              <span className="extra-label">A (Dairy)</span>
+              <span className="extra-label">Calcium</span>
+              <span className="extra-count">
+                {summary?.healthyExtraACount || 0}/{profile?.healthyExtraAAllowance || 1}
+              </span>
               <span className="extra-status">
                 {summary?.healthyExtraAUsed ? '✓' : '○'}
               </span>
             </div>
             <div className={`extra-item ${summary?.healthyExtraBUsed ? 'used' : ''}`}>
-              <span className="extra-label">B (Fiber)</span>
+              <span className="extra-label">Fibre</span>
+              <span className="extra-count">
+                {summary?.healthyExtraBCount || 0}/{profile?.healthyExtraBAllowance || 1}
+              </span>
               <span className="extra-status">
                 {summary?.healthyExtraBUsed ? '✓' : '○'}
+              </span>
+            </div>
+            <div className={`extra-item ${summary?.healthyExtraCUsed ? 'used' : ''}`}>
+              <span className="extra-label">Healthy Fats</span>
+              <span className="extra-count">
+                {summary?.healthyExtraCCount || 0}/{profile?.healthyExtraCAllowance || 1}
+              </span>
+              <span className="extra-status">
+                {summary?.healthyExtraCUsed ? '✓' : '○'}
               </span>
             </div>
           </div>
@@ -148,8 +163,17 @@ const Dashboard = () => {
             {summary.entries.map((entry) => (
               <div key={entry.id} className="entry-item">
                 <div className="entry-meal">{entry.mealType}</div>
-                <div className="entry-food">{entry.food?.name}</div>
-                <div className="entry-syns">{entry.synValueConsumed} syns</div>
+                <div className="entry-food">
+                  {entry.food?.name}
+                  {entry.isHealthyExtra && entry.healthyExtraType && (
+                    <span className={`badge badge-he badge-he-${entry.healthyExtraType.toLowerCase()}`}>
+                      HE-{entry.healthyExtraType === 'A' ? 'Calcium' : entry.healthyExtraType === 'B' ? 'Fibre' : 'Fats'}
+                    </span>
+                  )}
+                </div>
+                <div className="entry-syns">
+                  {entry.isHealthyExtra ? '0' : entry.synValueConsumed} syns
+                </div>
               </div>
             ))}
           </div>

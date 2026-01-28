@@ -11,6 +11,7 @@ export interface DiaryEntry {
   quantity: number;
   syn_value_consumed: number;
   is_healthy_extra: number;
+  healthy_extra_type?: string;
   created_at: string;
 }
 
@@ -23,8 +24,8 @@ export class DiaryModel {
     const id = uuidv4();
 
     await pool.query(
-      `INSERT INTO food_diary (id, user_id, date, meal_type, food_id, quantity, syn_value_consumed, is_healthy_extra)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      `INSERT INTO food_diary (id, user_id, date, meal_type, food_id, quantity, syn_value_consumed, is_healthy_extra, healthy_extra_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         id,
         userId,
@@ -33,7 +34,8 @@ export class DiaryModel {
         data.food_id,
         data.quantity,
         data.syn_value_consumed,
-        data.is_healthy_extra ? 1 : 0
+        data.is_healthy_extra ? 1 : 0,
+        data.healthy_extra_type || null
       ]
     );
 
@@ -58,6 +60,7 @@ export class DiaryModel {
         fd.quantity as diary_quantity,
         fd.syn_value_consumed as diary_syn_value_consumed,
         fd.is_healthy_extra as diary_is_healthy_extra,
+        fd.healthy_extra_type as diary_healthy_extra_type,
         fd.created_at as diary_created_at,
         f.id as food_id,
         f.name as food_name,
@@ -88,6 +91,7 @@ export class DiaryModel {
       quantity: row.diary_quantity,
       synValueConsumed: row.diary_syn_value_consumed,
       isHealthyExtra: Boolean(row.diary_is_healthy_extra),
+      healthyExtraType: row.diary_healthy_extra_type || undefined,
       createdAt: row.diary_created_at,
       food: row.food_id ? {
         id: row.food_id,
@@ -134,9 +138,24 @@ export class DiaryModel {
   static async getDailySummary(userId: string, date: string) {
     const entries = await this.findByUserAndDate(userId, date);
 
-    const totalSyns = entries.reduce((sum, entry) => sum + entry.synValueConsumed, 0);
-    const healthyExtraAUsed = entries.some(entry => entry.isHealthyExtra && entry.food?.healthyExtraType === 'A');
-    const healthyExtraBUsed = entries.some(entry => entry.isHealthyExtra && entry.food?.healthyExtraType === 'B');
+    // Fix: Don't count syns for entries marked as healthy extras
+    const totalSyns = entries.reduce((sum, entry) => {
+      // If marked as a healthy extra, don't count the syns
+      if (entry.isHealthyExtra) {
+        return sum;
+      }
+      return sum + entry.synValueConsumed;
+    }, 0);
+
+    // Count healthy extras by type (using the diary entry's healthyExtraType, not the food's)
+    const healthyExtraACount = entries.filter(entry => entry.isHealthyExtra && entry.healthyExtraType === 'A').length;
+    const healthyExtraBCount = entries.filter(entry => entry.isHealthyExtra && entry.healthyExtraType === 'B').length;
+    const healthyExtraCCount = entries.filter(entry => entry.isHealthyExtra && entry.healthyExtraType === 'C').length;
+
+    const healthyExtraAUsed = healthyExtraACount > 0;
+    const healthyExtraBUsed = healthyExtraBCount > 0;
+    const healthyExtraCUsed = healthyExtraCCount > 0;
+
     const speedFoodsCount = entries.filter(entry => entry.food?.isSpeedFood).length;
 
     return {
@@ -144,6 +163,10 @@ export class DiaryModel {
       totalSyns,
       healthyExtraAUsed,
       healthyExtraBUsed,
+      healthyExtraCUsed,
+      healthyExtraACount,
+      healthyExtraBCount,
+      healthyExtraCCount,
       speedFoodsCount,
       entries
     };

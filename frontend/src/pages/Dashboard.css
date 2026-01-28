@@ -86,13 +86,25 @@
   margin-top: 15px;
 }
 
+.healthy-extras .extras-grid-3 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 480px) {
+  .healthy-extras .extras-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .extra-item {
-  padding: 15px;
+  padding: 12px;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
+  text-align: center;
+  gap: 5px;
 }
 
 .extra-item.used {
@@ -102,10 +114,17 @@
 
 .extra-label {
   font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.extra-count {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #007bff;
 }
 
 .extra-status {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
 }
 
 .speed-foods {
@@ -241,4 +260,30 @@
   text-align: center;
   color: #999;
   padding: 40px 20px;
+}
+
+/* Healthy Extra Badges */
+.badge-he {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  border-radius: 10px;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.badge-he-a {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.badge-he-b {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.badge-he-c {
+  background-color: #e8f5e9;
+  color: #2e7d32;
 }

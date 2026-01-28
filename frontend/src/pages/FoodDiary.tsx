@@ -13,7 +13,7 @@ const FoodDiary = () => {
   const [selectedMeal, setSelectedMeal] = useState<'breakfast' | 'lunch' | 'dinner' | 'snacks'>('breakfast');
   const [selectedFood, setSelectedFood] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
-  const [isHealthyExtra, setIsHealthyExtra] = useState(false);
+  const [healthyExtraType, setHealthyExtraType] = useState<'none' | 'A' | 'B' | 'C'>('none');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -49,7 +49,9 @@ const FoodDiary = () => {
     const food = foods.find((f) => f.id === selectedFood);
     if (!food) return;
 
-    const synValue = food.isFreeFood ? 0 : food.synValue * quantity;
+    const isHealthyExtra = healthyExtraType !== 'none';
+    // If marked as healthy extra, syns are 0 (they don't count)
+    const synValue = isHealthyExtra ? 0 : (food.isFreeFood ? 0 : food.synValue * quantity);
 
     try {
       await diaryAPI.addEntry({
@@ -59,12 +61,13 @@ const FoodDiary = () => {
         quantity,
         synValueConsumed: synValue,
         isHealthyExtra,
+        healthyExtraType: isHealthyExtra ? healthyExtraType : undefined,
       });
 
       setShowAddModal(false);
       setSelectedFood('');
       setQuantity(1);
-      setIsHealthyExtra(false);
+      setHealthyExtraType('none');
       setSearchQuery('');
       loadEntries();
     } catch (error) {
@@ -93,7 +96,11 @@ const FoodDiary = () => {
   };
 
   const getMealTotal = (meal: string) => {
-    return getEntriesByMeal(meal).reduce((sum, entry) => sum + entry.synValueConsumed, 0);
+    return getEntriesByMeal(meal).reduce((sum, entry) => {
+      // Don't count syns for healthy extras
+      if (entry.isHealthyExtra) return sum;
+      return sum + entry.synValueConsumed;
+    }, 0);
   };
 
   const filteredFoods = searchQuery
@@ -139,10 +146,19 @@ const FoodDiary = () => {
                         <span className="entry-quantity">
                           {entry.quantity} × {entry.food?.portionSize} {entry.food?.portionUnit}
                         </span>
-                        {entry.isHealthyExtra && <span className="badge badge-extra">HE</span>}
+                        {entry.isHealthyExtra && entry.healthyExtraType && (
+                          <span className={`badge badge-extra badge-extra-${entry.healthyExtraType.toLowerCase()}`}>
+                            HE-{entry.healthyExtraType === 'A' ? 'Ca' : entry.healthyExtraType === 'B' ? 'Fi' : 'Fa'}
+                          </span>
+                        )}
+                        {entry.isHealthyExtra && !entry.healthyExtraType && (
+                          <span className="badge badge-extra">HE</span>
+                        )}
                       </div>
                       <div className="entry-actions">
-                        <span className="entry-syns">{entry.synValueConsumed} syns</span>
+                        <span className="entry-syns">
+                          {entry.isHealthyExtra ? '0' : entry.synValueConsumed} syns
+                        </span>
                         <button onClick={() => handleDeleteEntry(entry.id)} className="btn-delete">
                           🗑️
                         </button>
@@ -159,7 +175,7 @@ const FoodDiary = () => {
       )}
 
       {showAddModal && (
-        <div className="modal-overlay" onClick={() => { setShowAddModal(false); setSearchQuery(''); setSelectedFood(''); }}>
+        <div className="modal-overlay" onClick={() => { setShowAddModal(false); setSearchQuery(''); setSelectedFood(''); setHealthyExtraType('none'); }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Add Food to {selectedMeal}</h2>
             <div className="form-group">
@@ -238,17 +254,25 @@ const FoodDiary = () => {
               />
             </div>
             <div className="form-group">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={isHealthyExtra}
-                  onChange={(e) => setIsHealthyExtra(e.target.checked)}
-                />
-                Mark as Healthy Extra
-              </label>
+              <label>Use as Healthy Extra</label>
+              <select
+                value={healthyExtraType}
+                onChange={(e) => setHealthyExtraType(e.target.value as 'none' | 'A' | 'B' | 'C')}
+                className="healthy-extra-select"
+              >
+                <option value="none">Not a Healthy Extra (count syns)</option>
+                <option value="A">Calcium (Milk, Cheese, Dairy-free)</option>
+                <option value="B">Fibre (Bread, Cereals, Fruit)</option>
+                <option value="C">Healthy Fats (Nuts, Seeds, Oils)</option>
+              </select>
+              {healthyExtraType !== 'none' && (
+                <p className="healthy-extra-info">
+                  This will use one of your daily Healthy Extra allowances and won't count towards your syns.
+                </p>
+              )}
             </div>
             <div className="modal-actions">
-              <button onClick={() => { setShowAddModal(false); setSearchQuery(''); setSelectedFood(''); }} className="btn btn-secondary">
+              <button onClick={() => { setShowAddModal(false); setSearchQuery(''); setSelectedFood(''); setHealthyExtraType('none'); }} className="btn btn-secondary">
                 Cancel
               </button>
               <button onClick={handleAddEntry} className="btn btn-primary" disabled={!selectedFood}>

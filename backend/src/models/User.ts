@@ -21,6 +21,7 @@ export interface UserProfile {
   daily_syn_allowance: number;
   healthy_extra_a_allowance: number;
   healthy_extra_b_allowance: number;
+  healthy_extra_c_allowance: number;
 }
 
 export class UserModel {
@@ -37,8 +38,8 @@ export class UserModel {
     // Create default profile
     const profileId = uuidv4();
     await pool.query(
-      `INSERT INTO user_profiles (id, user_id, starting_weight, current_weight, target_weight, daily_syn_allowance, healthy_extra_a_allowance, healthy_extra_b_allowance)
-       VALUES ($1, $2, 0, 0, 0, 15, 1, 1)`,
+      `INSERT INTO user_profiles (id, user_id, starting_weight, current_weight, target_weight, daily_syn_allowance, healthy_extra_a_allowance, healthy_extra_b_allowance, healthy_extra_c_allowance)
+       VALUES ($1, $2, 0, 0, 0, 15, 1, 1, 1)`,
       [profileId, id]
     );
 
@@ -77,7 +78,8 @@ export class UserModel {
       height: profile.height,
       dailySynAllowance: profile.daily_syn_allowance,
       healthyExtraAAllowance: profile.healthy_extra_a_allowance,
-      healthyExtraBAllowance: profile.healthy_extra_b_allowance
+      healthyExtraBAllowance: profile.healthy_extra_b_allowance,
+      healthyExtraCAllowance: profile.healthy_extra_c_allowance || 1
     };
   }
 
@@ -90,7 +92,8 @@ export class UserModel {
       height: 'height',
       dailySynAllowance: 'daily_syn_allowance',
       healthyExtraAAllowance: 'healthy_extra_a_allowance',
-      healthyExtraBAllowance: 'healthy_extra_b_allowance'
+      healthyExtraBAllowance: 'healthy_extra_b_allowance',
+      healthyExtraCAllowance: 'healthy_extra_c_allowance'
     };
 
     const fields = Object.keys(data)
