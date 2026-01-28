@@ -63,6 +63,9 @@ export const isFreeFood = (nutrition: NutritionalInfo, foodName: string): boolea
     'fried', 'battered', 'breaded', 'crispy', 'chips', 'fries', 'deep fried',
     'salad dressing', 'mayo', 'mayonnaise', 'coleslaw',
     'butter', 'buttered', 'oil', 'roasted in', 'cooked in oil',
+    // Prepared salads that contain dressing, cheese, or mayonnaise
+    'caesar', 'waldorf', 'potato salad', 'pasta salad', 'egg salad',
+    'chicken salad', 'tuna salad', 'coronation', 'nicoise',
     // Cheese (not fat-free)
     'cheese', 'cheddar', 'brie', 'parmesan', 'feta', 'mozzarella', 'stilton',
     // Fruit drinks and smoothies (count as syns per Slimming World)
